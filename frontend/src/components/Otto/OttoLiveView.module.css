@@ -82,9 +82,30 @@
 .caret { display: inline-block; width: 8px; height: 15px; background: var(--on-surface); margin-left: 2px; vertical-align: -2px; animation: blink 1s step-end infinite; }
 @keyframes blink { 50% { opacity: 0; } }
 
-/* per-bubble actions (reveal on hover) */
+/* selectable / marked bubble */
+.turn { border-radius: 10px; padding: 6px 10px; margin: 0 -10px; cursor: pointer; transition: background .12s, box-shadow .12s; }
+.turn:hover { background: color-mix(in srgb, var(--container) 60%, transparent); }
+.turn.selected { background: color-mix(in srgb, var(--primary-container) 14%, transparent); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--primary) 40%, transparent); }
+.turn.marked { box-shadow: inset 2px 0 0 var(--primary); }
+.markRow { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.markBadge { display: inline-flex; align-items: center; gap: 5px; font-family: var(--font-mono); font-size: 10px; font-weight: 600; letter-spacing: .04em; padding: 2px 7px; border-radius: 5px; text-transform: uppercase; background: var(--container-high); color: var(--on-surface-variant); }
+.markBadge.clarify { color: #7fb2ff; background: color-mix(in srgb, #7fb2ff 15%, transparent); }
+.markBadge.bookmark { color: var(--primary); background: color-mix(in srgb, var(--primary) 16%, transparent); }
+.markBadge.flag { color: var(--mint); background: color-mix(in srgb, var(--mint) 15%, transparent); }
+.markBadge.action { color: var(--error); background: color-mix(in srgb, var(--error) 15%, transparent); }
+
+/* per-bubble actions (reveal on hover, stay if active) */
 .turnActions { flex: none; display: flex; gap: 6px; align-items: flex-start; opacity: 0; transition: opacity .12s; padding-top: 2px; }
 .turn:hover .turnActions { opacity: 1; }
+.bAct.active { opacity: 1 !important; background: var(--primary-container); border-color: var(--primary-container); color: var(--on-primary-container); }
+.bAct.clarify.active { background: #7fb2ff; border-color: #7fb2ff; color: #0d1420; }
+.bAct.flag.active { background: var(--mint); border-color: var(--mint); color: #08130d; }
+.bAct.action.active { background: var(--error); border-color: var(--error); color: #3a0a08; }
+
+/* stop button feedback */
+.stopping { opacity: .8; cursor: default; }
+.spin { width: 13px; height: 13px; border-radius: 50%; border: 2px solid rgba(255,255,255,.4); border-top-color: #fff; animation: spin .7s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
 .bAct { width: 30px; height: 30px; border-radius: 8px; border: 1px solid var(--outline-variant); background: var(--container); color: var(--tertiary); font-size: 13px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: transform .06s, border-color .12s, background .12s; }
 .bAct:active { transform: scale(.9); }
 .bAct.clarify:hover { color: #7fb2ff; border-color: #7fb2ff; }

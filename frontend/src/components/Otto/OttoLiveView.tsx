@@ -39,6 +39,10 @@ export default function OttoLiveView() {
   const [flash, setFlash] = useState<string | null>(null);
   const [focus, setFocus] = useState(false);
   const [parked, setParked] = useState<Set<string>>(new Set());
+  const [stopping, setStopping] = useState(false);
+  // Per-bubble markers, keyed by bubble id -> set of active marker types (toggle).
+  const [marks, setMarks] = useState<Record<string, string[]>>({});
+  const [selected, setSelected] = useState<string | null>(null);
   const transcriptsRef = useRef<any[]>(transcripts);
   transcriptsRef.current = transcripts;
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -94,6 +98,27 @@ export default function OttoLiveView() {
     window.setTimeout(() => setFlash(null), 1600);
   }, [meetingTitle, elapsed]);
 
+  // Toggle a marker on a specific bubble (persistent visual + DB on enable).
+  const toggleBubbleMark = useCallback((seg: any, type: string, label: string) => {
+    const id = seg.id || `t-${seg.audio_start_time}`;
+    setMarks((prev) => {
+      const cur = prev[id] || [];
+      const has = cur.includes(type);
+      if (!has) {
+        const payload = JSON.stringify({ line: seg.text || '', speaker: seg.speaker || null, ts: seg.audio_start_time ?? null });
+        invoke('otto_add_marker', {
+          meetingId: meetingTitle || 'live-session',
+          markerType: type,
+          audioTsMs: Math.floor((seg.audio_start_time || 0) * 1000),
+          payload,
+        }).catch((e) => console.warn('marker failed:', e));
+        setFlash(label);
+        window.setTimeout(() => setFlash((f) => (f === label ? null : f)), 1400);
+      }
+      return { ...prev, [id]: has ? cur.filter((t) => t !== type) : [...cur, type] };
+    });
+  }, [meetingTitle]);
+
   const BUBBLE_ACTS: { type: string; icon: string; label: string; cls: string }[] = [
     { type: 'clarify', icon: '❓', label: 'Verheldering gevraagd', cls: 'clarify' },
     { type: 'bookmark', icon: '🔖', label: 'Bladwijzer gezet', cls: 'bookmark' },
@@ -140,10 +165,11 @@ export default function OttoLiveView() {
               Focus
             </button>
             <button
-              className={styles.stopBtn}
-              onClick={() => window.dispatchEvent(new CustomEvent('otto-stop-recording'))}
+              className={`${styles.stopBtn} ${stopping ? styles.stopping : ''}`}
+              disabled={stopping}
+              onClick={() => { setStopping(true); window.dispatchEvent(new CustomEvent('otto-stop-recording')); }}
             >
-              ⏹ Stop &amp; Sync to Vault
+              {stopping ? <><span className={styles.spin} />Stoppen &amp; opslaan…</> : <>⏹ Stop &amp; Sync to Vault</>}
             </button>
             <span className={styles.avatar} />
           </div>
@@ -162,20 +188,35 @@ export default function OttoLiveView() {
               ) : (
                 turns.map((t: any, i: number) => {
                   const live = i === turns.length - 1;
+                  const id = t.id || `t-${t.audio_start_time}`;
+                  const bMarks = marks[id] || [];
+                  const isSel = selected === id;
                   return (
-                    <div key={t.id || i} className={`${styles.turn} ${live ? styles.live : ''}`}>
+                    <div
+                      key={id}
+                      className={`${styles.turn} ${live ? styles.live : ''} ${isSel ? styles.selected : ''} ${bMarks.length ? styles.marked : ''}`}
+                      onClick={() => setSelected((s) => (s === id ? null : id))}
+                    >
                       <span className={styles.tTime}>{clock(t.audio_start_time || 0)}</span>
                       <div className={styles.tBody}>
                         <span className={styles.tWho}>{who(t.speaker)}{live && <span className={styles.tLiveDot} />}</span>
                         <div className={styles.tText}>{t.text}{live && <span className={styles.caret} />}</div>
+                        {bMarks.length > 0 && (
+                          <div className={styles.markRow}>
+                            {bMarks.map((m) => {
+                              const a = BUBBLE_ACTS.find((x) => x.type === m)!;
+                              return <span key={m} className={`${styles.markBadge} ${styles[a.cls]}`}>{a.icon} {a.type}</span>;
+                            })}
+                          </div>
+                        )}
                       </div>
                       <div className={styles.turnActions}>
                         {BUBBLE_ACTS.map((a) => (
                           <button
                             key={a.type}
-                            className={`${styles.bAct} ${styles[a.cls]}`}
+                            className={`${styles.bAct} ${styles[a.cls]} ${bMarks.includes(a.type) ? styles.active : ''}`}
                             title={a.label}
-                            onClick={() => addMarker(a.type, a.label, t)}
+                            onClick={(e) => { e.stopPropagation(); toggleBubbleMark(t, a.type, a.label); }}
                           >
                             {a.icon}
                           </button>
