@@ -13,31 +13,52 @@ use serde::{Deserialize, Serialize};
 use tauri::{Manager, Runtime};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct CoachQuestion {
+pub struct SummaryBullet {
     pub text: String,
     #[serde(default)]
     pub cite: Option<String>,
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct AnticipateItem {
+    pub title: String,
+    pub body: String,
+    /// "recall" (a prior decision/context) or "risk" (a warning/scope-creep).
+    #[serde(default)]
+    pub kind: Option<String>,
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct CoachResult {
+    /// Current topic label (e.g. "Q3 Resource Allocation").
     #[serde(default)]
-    pub summary: String,
+    pub topic: String,
+    /// Rolling summary bullets with source citations.
     #[serde(default)]
-    pub questions: Vec<CoachQuestion>,
+    pub summary: Vec<SummaryBullet>,
+    /// Coach: Anticipate — insights (recall prior decisions, flag risks).
+    #[serde(default)]
+    pub anticipate: Vec<AnticipateItem>,
+    /// Suggested clarifications — quoted questions to ask now.
+    #[serde(default)]
+    pub clarifications: Vec<String>,
 }
 
 const SYSTEM_PROMPT: &str = r#"Je bent Otto, een live meeting-coach die meeluistert. Je krijgt het transcript-tot-nu-toe (regels met [mm:ss] timestamps).
 
 Geef UITSLUITEND geldige JSON terug, exact dit formaat en niets anders:
-{"summary": "<1-2 zinnen rollende samenvatting van waar het gesprek nu staat>",
- "questions": [{"text": "<een korte, scherpe anticipatievraag of verheldering die de gebruiker NU zou moeten overwegen>", "cite": "[mm:ss]"}]}
+{
+ "topic": "<korte label van het huidige onderwerp>",
+ "summary": [{"text": "<een kern-punt van waar het gesprek nu staat>", "cite": "[mm:ss]"}],
+ "anticipate": [{"title": "<korte titel>", "body": "<inzicht: herinner een eerdere beslissing, of waarschuw voor een risico/scope-creep>", "kind": "recall|risk"}],
+ "clarifications": ["<een letterlijke vraag die de gebruiker NU zou kunnen stellen om iets te verhelderen>"]
+}
 
 Regels:
-- Maximaal 3 vragen. Liever 1 goede dan 3 zwakke.
-- BRONPLICHT: elke vraag heeft een "cite" = een [mm:ss] timestamp die letterlijk in het transcript voorkomt. Verzin niks. Geen bron = laat de vraag weg.
-- Vragen anticiperen: wat mist er, wat is dubbelzinnig, welke beslissing of actie dreigt onbesproken te blijven.
-- Nederlands, tenzij het gesprek duidelijk in een andere taal is.
+- summary: 1-3 punten. BRONPLICHT: elke "cite" is een [mm:ss] die letterlijk in het transcript staat. Geen bron = laat het punt weg.
+- anticipate: 0-2 inzichten. Alleen als je iets zinnigs hebt (een risico dat dreigt, een beslissing die onbesproken blijft). Verzin niks.
+- clarifications: 0-3 concrete vragen, tussen aanhalingstekens, gericht (bv. "Marcus, is de Acme-deal definitief weg?").
+- Nederlands, tenzij het gesprek duidelijk anderstalig is.
 - Geen tekst buiten de JSON."#;
 
 fn extract_json(raw: &str) -> Option<String> {
@@ -60,6 +81,35 @@ fn api_key_for(provider: &LLMProvider, s: &crate::database::models::Setting) -> 
         _ => None,
     }
     .unwrap_or_default()
+}
+
+/// Add a marker (bookmark / flag / clarify / action) during a live meeting.
+#[tauri::command]
+pub async fn otto_add_marker(
+    state: tauri::State<'_, AppState>,
+    meeting_id: String,
+    marker_type: String,
+    audio_ts_ms: Option<i64>,
+    payload: Option<String>,
+) -> Result<(), String> {
+    let meeting_id = meeting_id.trim().to_string();
+    if meeting_id.is_empty() {
+        return Err("meeting_id is empty".to_string());
+    }
+    let now = chrono::Utc::now().to_rfc3339();
+    sqlx::query(
+        "INSERT INTO otto_markers (meeting_id, segment_id, type, audio_ts_ms, created_at, status, payload)
+         VALUES (?, NULL, ?, ?, ?, 'open', ?)",
+    )
+    .bind(&meeting_id)
+    .bind(&marker_type)
+    .bind(audio_ts_ms)
+    .bind(&now)
+    .bind(&payload)
+    .execute(state.db_manager.pool())
+    .await
+    .map_err(|e| format!("Failed to add marker: {}", e))?;
+    Ok(())
 }
 
 /// One rolling coach pass over the given live transcript text.
@@ -114,8 +164,13 @@ pub async fn otto_coach_pass<R: Runtime>(
     let parsed = extract_json(&raw)
         .and_then(|j| serde_json::from_str::<CoachResult>(&j).ok())
         .unwrap_or_else(|| CoachResult {
-            summary: raw.trim().chars().take(400).collect(),
-            questions: vec![],
+            topic: String::new(),
+            summary: vec![SummaryBullet {
+                text: raw.trim().chars().take(400).collect(),
+                cite: None,
+            }],
+            anticipate: vec![],
+            clarifications: vec![],
         });
 
     Ok(parsed)

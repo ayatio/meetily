@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { RecordingControls } from '@/components/RecordingControls';
-import OttoLiveCoach from '@/components/Otto/OttoLiveCoach';
+import OttoLiveView from '@/components/Otto/OttoLiveView';
 import { useSidebar } from '@/components/Sidebar/SidebarProvider';
 import { usePermissionCheck } from '@/hooks/usePermissionCheck';
 import { useRecordingState, RecordingStatus } from '@/contexts/RecordingStateContext';
@@ -49,6 +49,13 @@ export default function Home() {
     setIsRecordingState,
     setIsRecordingDisabled
   );
+
+  // Otto live view's "Stop & Sync to Vault" button triggers the real stop flow.
+  useEffect(() => {
+    const onStop = () => { setIsStopping(true); handleRecordingStop(true); };
+    window.addEventListener('otto-stop-recording', onStop);
+    return () => window.removeEventListener('otto-stop-recording', onStop);
+  }, [handleRecordingStop, setIsStopping]);
 
   // Recovery hook
   const {
@@ -197,8 +204,8 @@ export default function Home() {
       transition={{ duration: 0.3, ease: 'easeOut' }}
       className="flex flex-col h-screen bg-gray-50"
     >
-      {/* Otto live coach — appears during recording */}
-      <OttoLiveCoach />
+      {/* Otto live view — full design2 live experience during recording */}
+      <OttoLiveView />
       {/* All Modals supported*/}
       <SettingsModals
         modals={modals}
