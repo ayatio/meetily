@@ -78,25 +78,26 @@
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 0 0% 3.9%;
-    --card: 0 0% 100%;
-    --card-foreground: 0 0% 3.9%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 3.9%;
-    --primary: 0 0% 9%;
-    --primary-foreground: 0 0% 98%;
-    --secondary: 0 0% 96.1%;
-    --secondary-foreground: 0 0% 9%;
-    --muted: 0 0% 96.1%;
-    --muted-foreground: 0 0% 45.1%;
-    --accent: 0 0% 96.1%;
-    --accent-foreground: 0 0% 9%;
+    /* Otto Scribe dark theme (retinted shadcn tokens) */
+    --background: 228 13% 8%;
+    --foreground: 255 10% 90%;
+    --card: 225 9% 11%;
+    --card-foreground: 255 10% 90%;
+    --popover: 225 10% 13%;
+    --popover-foreground: 255 10% 90%;
+    --primary: 241 100% 88%;
+    --primary-foreground: 245 70% 12%;
+    --secondary: 240 8% 18%;
+    --secondary-foreground: 255 10% 90%;
+    --muted: 240 8% 16%;
+    --muted-foreground: 250 8% 62%;
+    --accent: 245 60% 62%;
+    --accent-foreground: 255 20% 96%;
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 98%;
-    --border: 0 0% 89.8%;
-    --input: 0 0% 89.8%;
-    --ring: 0 0% 3.9%;
+    --border: 249 12% 27%;
+    --input: 249 12% 27%;
+    --ring: 241 100% 88%;
     --radius: 0.5rem;
     --chart-1: 12 76% 61%;
     --chart-2: 173 58% 39%;
@@ -212,3 +213,57 @@
     overflow: visible !important;
   }
 }
+
+/* ============================================================
+   Otto Scribe global dark skin.
+   Remaps Meetily's hardcoded light utilities to the Otto palette
+   (deep dark + lavender) so the whole app reads as Otto Scribe.
+   ============================================================ */
+:root {
+  --otto-bg: #121317;
+  --otto-layer1: #1a1b1f;
+  --otto-layer2: #1e1f23;
+  --otto-layer3: #292a2e;
+  --otto-on: #e3e2e7;
+  --otto-on-variant: #c7c4d7;
+  --otto-muted: #9a98a6;
+  --otto-border: #2b2442;
+  --otto-border-strong: #464554;
+  --otto-primary: #c2c1ff;
+  --otto-primary-container: #5e5ce6;
+}
+
+html, body { background-color: var(--otto-bg) !important; color: var(--otto-on); }
+
+/* surfaces */
+.bg-white, .bg-gray-50, .bg-slate-50, .bg-neutral-50, .bg-zinc-50 { background-color: var(--otto-layer1) !important; }
+.bg-gray-100, .bg-slate-100, .bg-neutral-100, .bg-zinc-100 { background-color: var(--otto-layer2) !important; }
+.bg-gray-200, .bg-slate-200 { background-color: var(--otto-layer3) !important; }
+.hover\:bg-gray-50:hover, .hover\:bg-gray-100:hover, .hover\:bg-slate-100:hover { background-color: var(--otto-layer3) !important; }
+
+/* primary buttons (Meetily uses near-black fills) -> lavender */
+.bg-black, .bg-gray-900, .bg-gray-950, .bg-neutral-900, .bg-slate-900 { background-color: var(--otto-primary-container) !important; color: #f4f1ff !important; }
+.hover\:bg-gray-800:hover, .hover\:bg-black:hover { filter: brightness(1.08); }
+
+/* text */
+.text-black, .text-gray-900, .text-gray-800, .text-slate-900, .text-neutral-900 { color: var(--otto-on) !important; }
+.text-gray-700, .text-gray-600, .text-slate-700, .text-slate-600 { color: var(--otto-on-variant) !important; }
+.text-gray-500, .text-gray-400, .text-slate-500, .text-slate-400 { color: var(--otto-muted) !important; }
+
+/* borders */
+.border-gray-100, .border-gray-200, .border-gray-300, .border-slate-100, .border-slate-200, .border-neutral-200 { border-color: var(--otto-border) !important; }
+
+/* accent blue -> lavender */
+.text-blue-600, .text-blue-500, .text-blue-700 { color: var(--otto-primary) !important; }
+.bg-blue-600, .bg-blue-500, .bg-blue-700 { background-color: var(--otto-primary-container) !important; }
+.bg-blue-50, .bg-blue-100 { background-color: rgba(94, 92, 230, 0.15) !important; }
+.border-blue-500, .border-blue-600 { border-color: var(--otto-primary) !important; }
+.hover\:bg-blue-100:hover, .hover\:bg-blue-50:hover { background-color: rgba(94, 92, 230, 0.25) !important; }
+.hover\:bg-blue-700:hover { filter: brightness(1.08); }
+
+/* inputs */
+input, textarea, select { background-color: var(--otto-layer2); color: var(--otto-on); border-color: var(--otto-border); }
+input::placeholder, textarea::placeholder { color: var(--otto-muted); }
+
+/* soften heavy light shadows on dark */
+.shadow-lg, .shadow-md, .shadow-xl { box-shadow: 0 4px 16px rgba(0,0,0,0.4) !important; }
