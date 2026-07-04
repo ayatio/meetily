@@ -1,12 +1,15 @@
 'use client';
 
 /**
- * Otto Scribe — vault-detail view.
+ * Otto Scribe — meeting-detail dashboard.
  *
- * Faithful port of docs/otto/stitch-design1/meeting_detail_desktop_view, scoped
- * via OttoVaultDetail.module.css so the upstream Meetily theme is untouched.
- * Presentational only (no Tauri) so it renders in a plain browser for preview
- * and can be wired to real data by the meeting-details page.
+ * Faithful port of docs/otto/stich-design2/meeting_detail_desktop_dashboard,
+ * scoped via OttoVaultDetail.module.css so the upstream Meetily theme is
+ * untouched. Two columns: Executive Summary + Action Items (left), raw
+ * transcript (right), with an audio player (P2) and topic pills.
+ *
+ * Presentational only (no Tauri) so it renders standalone for preview and can
+ * be wired to real data by the meeting-details page.
  */
 
 import { useState } from 'react';
@@ -21,23 +24,28 @@ export interface OttoTranscriptLine {
   highlight?: boolean;
 }
 
-export interface OttoSummaryBullet {
-  label?: string;
+export interface OttoSummarySection {
+  category: string;
   text: string;
   cite?: string;
-  action?: boolean;
+}
+
+export interface OttoActionItem {
+  text: string;
+  owner?: string;
+  done?: boolean;
 }
 
 export interface OttoVaultDetailProps {
   title: string;
   dateLabel: string;
   durationLabel?: string;
-  vaultStatus?: string;
-  vaultPath?: string;
   participants: string[];
-  tags?: string[];
-  summaryIntro?: string;
-  bullets?: OttoSummaryBullet[];
+  topics?: string[];
+  vaultStatus?: string;
+  audio?: { positionLabel: string; durationLabel: string; progress: number };
+  summary?: OttoSummarySection[];
+  actionItems?: OttoActionItem[];
   transcript: OttoTranscriptLine[];
   exporting?: boolean;
   status?: { kind: 'ok' | 'err'; text: string } | null;
@@ -50,11 +58,12 @@ export default function OttoVaultDetail({
   title,
   dateLabel,
   durationLabel,
-  vaultStatus = 'Sent to Inbox/',
   participants,
-  tags = [],
-  summaryIntro,
-  bullets = [],
+  topics = [],
+  vaultStatus = 'Sent to Inbox',
+  audio,
+  summary = [],
+  actionItems = [],
   transcript,
   exporting = false,
   status = null,
@@ -74,38 +83,39 @@ export default function OttoVaultDetail({
     <div className={styles.scope}>
       <aside className={styles.sidebar}>
         <div className={styles.brand}>
-          <div className={styles.brandMark}>O</div>
-          <div>
-            <div className={styles.brandName}>Otto AI</div>
-            <div className={styles.brandSub}>Second Brain</div>
-          </div>
+          <span className={styles.brandName}>Otto AI</span>
+          <span className={styles.brandSub}>Second Brain</span>
         </div>
+        <button className={styles.cta}><span>＋</span>New Recording</button>
         <nav className={styles.nav}>
-          <div className={`${styles.navItem} ${styles.active}`}><span className={styles.navIcon}>▤</span>Vault</div>
-          <div className={styles.navItem}><span className={styles.navIcon}>▢</span>Meetings</div>
+          <div className={styles.navItem}><span className={styles.navIcon}>▤</span>Vault</div>
+          <div className={`${styles.navItem} ${styles.active}`}><span className={styles.navIcon}>▢</span>Meetings</div>
+          <span className={styles.navSpacer} />
           <div className={styles.navItem}><span className={styles.navIcon}>⚙</span>Settings</div>
         </nav>
-        <button className={styles.cta}><span>＋</span>New Recording</button>
-        <div className={styles.user}>
-          <div className={styles.userAvatar} />
-          <span>User Profile</span>
-        </div>
       </aside>
 
       <main className={styles.main}>
         <header className={styles.topbar}>
-          <button className={styles.back}>← Back to Vault</button>
-          <div className={styles.topActions}>
-            <span className={styles.statusPill}>{vaultStatus}</span>
-            <button className={styles.ghostBtn}>↗ View in Obsidian</button>
+          <span className={styles.statusPill}>
+            <span className={styles.ok}>◉</span> Vault Status: {vaultStatus}
+          </span>
+          <div className={styles.search}>
+            <span>⌕</span>
+            <input placeholder="Search transcript…" />
+          </div>
+          <div className={styles.topIcons}>
             <button className={styles.primaryBtn} onClick={onExport} disabled={exporting}>
-              {exporting ? 'Exporteren…' : 'Exporteer naar vault'}
+              {exporting ? 'Exporteren…' : 'Sync to Vault'}
             </button>
+            <button className={styles.ghostBtn}>↗ Obsidian</button>
+            <span className={styles.avatar} />
           </div>
         </header>
 
-        <div className={styles.content}>
-          <div className={styles.inner}>
+        <div className={styles.body}>
+          {/* LEFT: summary + actions */}
+          <div className={styles.colLeft}>
             <div>
               <h1 className={styles.title}>{title}</h1>
               <div className={styles.meta}>
@@ -116,112 +126,106 @@ export default function OttoVaultDetail({
                     <span>⏱ {durationLabel}</span>
                   </>
                 )}
+                <span className={styles.metaDot}>•</span>
+                <span>👥 {participants.length} Participants</span>
+              </div>
+              <div className={styles.topics}>
+                {topics.map((t) => (
+                  <span key={t} className={styles.topic}>{t}</span>
+                ))}
+                {participants.map((p) => (
+                  <span key={p} className={styles.topic} style={{ textTransform: 'none' }}>
+                    {p}
+                    {onRemoveParticipant && <span className={styles.chipX} onClick={() => onRemoveParticipant(p)}>×</span>}
+                  </span>
+                ))}
+                {onAddParticipant && (
+                  <input
+                    className={styles.addName}
+                    value={draft}
+                    onChange={(e) => setDraft(e.target.value)}
+                    onBlur={commitDraft}
+                    onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); commitDraft(); } }}
+                    placeholder="+ deelnemer…"
+                  />
+                )}
               </div>
             </div>
 
-            <div className={styles.grid}>
-              <section className={styles.card}>
-                <div className={styles.cardHead}>
-                  <span className={styles.eyebrow}>GROUNDED SUMMARY</span>
-                  <span className={styles.sparkle}>✦</span>
-                </div>
-                {summaryIntro ? (
-                  <p className={styles.summaryIntro}>{summaryIntro}</p>
-                ) : (
-                  <p className={styles.summaryIntro} style={{ color: 'var(--on-surface-variant)' }}>
-                    Nog geen samenvatting beschikbaar.
-                  </p>
-                )}
-                {bullets.length > 0 && (
-                  <ul className={styles.bullets}>
-                    {bullets.map((b, i) => (
-                      <li key={i} className={styles.bullet}>
-                        <span className={`${styles.bulletDot} ${b.action ? styles.action : ''}`} />
-                        {b.label && (
-                          <span className={`${styles.bulletLabel} ${b.action ? styles.action : ''}`}>{b.label} </span>
-                        )}
-                        {b.text}
-                        {b.cite && <button className={styles.cite}>{b.cite}</button>}
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </section>
-
-              <aside className={styles.card}>
-                <span className={styles.eyebrow}>FRONTMATTER</span>
-                <div className={styles.fm} style={{ marginTop: 16 }}>
-                  <div>
-                    <span className={styles.fmLabel}>PARTICIPANTS ({participants.length})</span>
-                    <div className={styles.chips}>
-                      {participants.map((p) => (
-                        <span key={p} className={styles.chip}>
-                          {p}
-                          {onRemoveParticipant && (
-                            <span className={styles.rm} onClick={() => onRemoveParticipant(p)} aria-label={`${p} verwijderen`}>×</span>
-                          )}
-                        </span>
-                      ))}
-                      {onAddParticipant && (
-                        <input
-                          className={styles.addName}
-                          value={draft}
-                          onChange={(e) => setDraft(e.target.value)}
-                          onBlur={commitDraft}
-                          onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); commitDraft(); } }}
-                          placeholder="+ naam…"
-                        />
-                      )}
-                    </div>
+            {audio && (
+              <div className={styles.player}>
+                <button className={styles.play}>▶</button>
+                <div className={styles.playerBody}>
+                  <div className={styles.scrub}>
+                    <div className={styles.scrubFill} style={{ width: `${Math.round(audio.progress * 100)}%` }} />
                   </div>
-                  {tags.length > 0 && (
-                    <>
-                      <hr className={styles.fmDivider} />
-                      <div>
-                        <span className={styles.fmLabel}>TAGS</span>
-                        <div className={styles.chips}>
-                          {tags.map((t) => (
-                            <span key={t} className={styles.tag}>#{t}</span>
-                          ))}
-                        </div>
-                      </div>
-                    </>
-                  )}
-                </div>
-              </aside>
-            </div>
-
-            <section>
-              <div className={styles.rawHead}>
-                <span className={styles.rawTitle}>Raw Transcript</span>
-                <div className={styles.toggleWrap}>
-                  <span>Auto-scroll</span>
-                  <span className={styles.toggle} />
+                  <div className={styles.scrubTimes}>
+                    <span>{audio.positionLabel}</span>
+                    <span>{audio.durationLabel}</span>
+                  </div>
                 </div>
               </div>
-              <div className={styles.transcript}>
-                {transcript.map((l, i) => (
-                  <div key={i} className={`${styles.line} ${l.marker === 'flag' ? styles.flag : ''} ${l.marker === 'action' ? styles.action : ''}`}>
-                    <span className={styles.ts}>{l.ts}</span>
-                    <div>
-                      {l.speaker && <span className={`${styles.who} ${l.highlight ? styles.hl : ''}`}>{l.speaker}: </span>}
-                      <span className={styles.said}>{l.text}</span>
-                      {l.lang && <span className={styles.lang}>{l.lang}</span>}
-                      {l.marker && (
-                        <div className={styles.markerRow}>
-                          <span className={`${styles.marker} ${l.marker === 'flag' ? styles.flag : styles.action}`}>
-                            {l.marker === 'flag' ? '📌 KEY MOMENT' : '✓ ACTION ITEM'}
-                          </span>
-                        </div>
-                      )}
+            )}
+
+            <div>
+              <h2 className={styles.h2}>Executive Summary</h2>
+              {summary.length > 0 ? (
+                summary.map((s, i) => (
+                  <div key={i} className={styles.summaryCard}>
+                    <div className={styles.summaryHead}>
+                      <span className={styles.cat}>{s.category}</span>
+                      {s.cite && <button className={styles.cite}>{s.cite}</button>}
                     </div>
+                    <p className={styles.summaryText}>{s.text}</p>
+                  </div>
+                ))
+              ) : (
+                <p className={styles.empty}>Nog geen samenvatting beschikbaar.</p>
+              )}
+            </div>
+
+            {actionItems.length > 0 && (
+              <div>
+                <h2 className={styles.h2}>Action Items</h2>
+                {actionItems.map((a, i) => (
+                  <div key={i} className={styles.actionItem}>
+                    <span className={`${styles.checkbox} ${a.done ? styles.done : ''}`} />
+                    <span className={styles.actionText}>{a.text}</span>
+                    {a.owner && <span className={styles.owner}>@{a.owner}</span>}
                   </div>
                 ))}
               </div>
-              {status && (
-                <div className={`${styles.statusMsg} ${status.kind === 'ok' ? styles.ok : styles.err}`}>{status.text}</div>
-              )}
-            </section>
+            )}
+
+            {status && (
+              <div className={`${styles.statusMsg} ${status.kind === 'ok' ? styles.ok : styles.err}`}>{status.text}</div>
+            )}
+          </div>
+
+          {/* RIGHT: raw transcript */}
+          <div className={styles.colRight}>
+            <div className={styles.rawHead}>
+              <span className={styles.rawTitle}>Raw Transcript</span>
+            </div>
+            {transcript.map((l, i) => (
+              <div key={i} className={`${styles.line} ${l.highlight ? styles.hl : ''}`}>
+                <span className={styles.ts}>{l.ts}</span>
+                <div className={styles.lineBody}>
+                  {l.speaker && <span className={styles.who}>{l.speaker}</span>}
+                  <span className={styles.said}>
+                    {l.text}
+                    {l.lang && <span className={styles.lang}>{l.lang}</span>}
+                  </span>
+                  {l.marker && (
+                    <div>
+                      <span className={`${styles.marker} ${l.marker === 'flag' ? styles.flag : styles.action}`}>
+                        {l.marker === 'flag' ? '📌 KEY MOMENT' : '✓ ACTION ITEM'}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       </main>

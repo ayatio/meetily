@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Otto AI - Live Coach View</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-variant": "#343539",
+                        "surface-dim": "#121317",
+                        "secondary-fixed-dim": "#c8c6c8",
+                        "secondary": "#c8c6c8",
+                        "secondary-container": "#49494b",
+                        "surface-container-high": "#292a2e",
+                        "surface-bright": "#38393d",
+                        "primary-fixed-dim": "#c2c1ff",
+                        "on-secondary-fixed": "#1b1b1d",
+                        "on-primary-container": "#f4f1ff",
+                        "on-surface-variant": "#c7c4d7",
+                        "surface-tint": "#c2c1ff",
+                        "error-container": "#93000a",
+                        "secondary-fixed": "#e4e2e4",
+                        "on-secondary-container": "#b9b8ba",
+                        "tertiary-container": "#6f6e70",
+                        "surface-container-low": "#1a1b1f",
+                        "outline": "#918fa0",
+                        "on-primary-fixed": "#0c006b",
+                        "primary-fixed": "#e2dfff",
+                        "inverse-surface": "#e3e2e7",
+                        "error": "#ffb4ab",
+                        "on-error-container": "#ffdad6",
+                        "on-tertiary-fixed": "#1b1b1d",
+                        "inverse-on-surface": "#2f3034",
+                        "tertiary-fixed-dim": "#c8c6c8",
+                        "inverse-primary": "#4d4ad5",
+                        "on-tertiary-container": "#f5f2f4",
+                        "on-tertiary": "#303032",
+                        "background": "#121317",
+                        "on-primary-fixed-variant": "#332dbc",
+                        "primary": "#c2c1ff",
+                        "on-surface": "#e3e2e7",
+                        "on-background": "#e3e2e7",
+                        "surface": "#121317",
+                        "tertiary-fixed": "#e4e2e4",
+                        "on-primary": "#1800a7",
+                        "tertiary": "#c8c6c8",
+                        "surface-container-lowest": "#0d0e12",
+                        "surface-container-highest": "#343539",
+                        "primary-container": "#5e5ce6",
+                        "on-tertiary-fixed-variant": "#474649",
+                        "surface-container": "#1e1f23",
+                        "on-secondary-fixed-variant": "#474648",
+                        "outline-variant": "#464554",
+                        "on-error": "#690005",
+                        "on-secondary": "#303032"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "stack-lg": "32px",
+                        "unit": "4px",
+                        "stack-sm": "8px",
+                        "container-padding": "24px",
+                        "stack-md": "16px",
+                        "gutter": "16px"
+                    },
+                    "fontFamily": {
+                        "headline-sm": ["Geist", "sans-serif"],
+                        "headline-md": ["Geist", "sans-serif"],
+                        "body-lg": ["Inter", "sans-serif"],
+                        "transcript-mono": ["JetBrains Mono", "monospace"],
+                        "citation": ["JetBrains Mono", "monospace"],
+                        "label-caps": ["JetBrains Mono", "monospace"],
+                        "display": ["Geist", "sans-serif"],
+                        "body-md": ["Inter", "sans-serif"]
+                    },
+                    "fontSize": {
+                        "headline-sm": ["20px", { "lineHeight": "1.4", "fontWeight": "500" }],
+                        "headline-md": ["24px", { "lineHeight": "1.3", "fontWeight": "500" }],
+                        "body-lg": ["16px", { "lineHeight": "1.6", "fontWeight": "400" }],
+                        "transcript-mono": ["14px", { "lineHeight": "1.7", "letterSpacing": "-0.01em", "fontWeight": "400" }],
+                        "citation": ["12px", { "lineHeight": "1.4", "fontWeight": "500" }],
+                        "label-caps": ["11px", { "lineHeight": "1.2", "letterSpacing": "0.05em", "fontWeight": "600" }],
+                        "display": ["32px", { "lineHeight": "1.2", "letterSpacing": "-0.02em", "fontWeight": "600" }],
+                        "body-md": ["14px", { "lineHeight": "1.5", "fontWeight": "400" }]
+                    }
+                }
+            }
+        }
+    </script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@500;600&amp;family=Inter:wght@400&amp;family=JetBrains+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        /* Pulse animation for LIVE badge */
+        @keyframes pulse-ring {
+            0% { transform: scale(0.8); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+            70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
+            100% { transform: scale(0.8); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+        }
+        .live-indicator { animation: pulse-ring 2s infinite; }
+        
+        /* Subtle scrollbar for dark theme */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #343539; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #464554; }
+    </style>
+</head>
+<body class="bg-background text-on-background font-body-md min-h-screen overflow-hidden selection:bg-primary-container selection:text-on-primary-container">
+<!-- TopAppBar -->
+<header class="bg-background dark:bg-background border-b border-outline-variant dark:border-outline-variant flat no shadows fixed top-0 right-0 left-64 h-16 flex justify-between items-center px-container-padding w-full z-20">
+<!-- Live Meeting Context -->
+<div class="flex items-center gap-4">
+<div class="flex items-center gap-2 bg-error-container/20 px-3 py-1 rounded-full border border-error/20">
+<div class="w-2 h-2 rounded-full bg-error live-indicator"></div>
+<span class="font-label-caps text-label-caps text-error">LIVE</span>
+<span class="font-transcript-mono text-transcript-mono text-error ml-2">45:12</span>
+</div>
+<div class="h-6 w-px bg-outline-variant"></div>
+<h1 class="font-headline-sm text-headline-sm text-primary dark:text-primary tracking-tight">Strategy Alignment</h1>
+</div>
+<!-- Trailing Actions -->
+<div class="flex items-center gap-4">
+<button class="text-on-surface-variant dark:text-on-surface-variant hover:text-on-surface dark:hover:text-on-surface cursor-pointer transition-opacity hover:opacity-80 p-2 rounded-lg hover:bg-surface-variant" title="Support">
+<span class="font-label-caps text-label-caps">Support</span>
+</button>
+<div class="flex items-center gap-2">
+<button class="text-on-surface-variant dark:text-on-surface-variant hover:text-on-surface dark:hover:text-on-surface cursor-pointer transition-opacity hover:opacity-80 p-2 rounded-full hover:bg-surface-variant">
+<span class="material-symbols-outlined text-[20px]">sensors</span>
+</button>
+<button class="text-on-surface-variant dark:text-on-surface-variant hover:text-on-surface dark:hover:text-on-surface cursor-pointer transition-opacity hover:opacity-80 p-2 rounded-full hover:bg-surface-variant">
+<span class="material-symbols-outlined text-[20px]">sync</span>
+</button>
+</div>
+<div class="h-8 w-8 rounded-full bg-surface-variant border border-outline-variant overflow-hidden ml-2 cursor-pointer transition-opacity hover:opacity-80">
+<img alt="User Avatar" class="w-full h-full object-cover" data-alt="A small, professional headshot of a user against a dark, minimalist background. The lighting is soft and corporate, matching the dark theme of the UI." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDkHL_lBWgfDa9_AzLrU_OEFr7r9LTnBbHoQu7lrFlft6HuX4pgtNCPuztYjri3Z2zs7LLEj_IqqmuS_AVnbVXY9LG34AWuVP9dXzuZVMpQKkbAx7kxtbMriZOGEgNfN_OBATtzBFU2zZjU8p-pY34Vha-9SrAYduYtEnkwg-J8T3r22ydkz0l_ZfzKzfgouzvyw3Mim9ZcB_bbWwsaRqMnGQXC2ygbwPm30BHTPAjhAQhyW6dklBeV"/>
+</div>
+</div>
+</header>
+<!-- SideNavBar -->
+<nav class="bg-surface-container-low dark:bg-surface-container-low h-screen w-64 fixed left-0 top-0 border-r border-outline-variant dark:border-outline-variant flat no shadows flex flex-col h-full py-container-padding px-stack-md z-30">
+<!-- Brand / User Header -->
+<div class="mb-stack-lg px-2 flex items-center gap-3">
+<div class="h-10 w-10 rounded-full bg-primary-container flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-on-primary-container">memory</span>
+</div>
+<div>
+<div class="font-headline-md text-headline-md font-bold text-primary dark:text-primary">Otto AI</div>
+<div class="font-label-caps text-label-caps text-on-surface-variant mt-1">Second Brain</div>
+</div>
+</div>
+<!-- CTA -->
+<button class="w-full bg-primary hover:bg-primary/90 text-on-primary font-body-md py-3 px-4 rounded-lg flex items-center justify-center gap-2 mb-stack-lg transition-colors duration-200 Active: scale-95 duration-100 transition-transform">
+<span class="material-symbols-outlined text-[18px]">add</span>
+            New Recording
+        </button>
+<!-- Navigation Links -->
+<div class="flex flex-col gap-unit flex-grow">
+<!-- Vault (Inactive) -->
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-on-surface-variant dark:text-on-surface-variant hover:bg-surface-variant dark:hover:bg-surface-variant transition-colors duration-200" href="#">
+<span class="material-symbols-outlined">inventory_2</span>
+<span class="font-headline-sm text-headline-sm">Vault</span>
+</a>
+<!-- Meetings (Active for Live View) -->
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-on-primary-container dark:text-on-primary-container bg-primary-container dark:bg-primary-container transition-colors duration-200 Active: scale-95 duration-100 transition-transform" href="#">
+<span class="material-symbols-outlined">video_chat</span>
+<span class="font-headline-sm text-headline-sm">Meetings</span>
+</a>
+<!-- Settings (Inactive) -->
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-on-surface-variant dark:text-on-surface-variant hover:bg-surface-variant dark:hover:bg-surface-variant transition-colors duration-200 mt-auto" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span class="font-headline-sm text-headline-sm">Settings</span>
+</a>
+</div>
+</nav>
+<!-- Main Content Area (12-column grid setup, offset by 64 sidebar and 16 header) -->
+<main class="ml-64 pt-16 h-screen flex relative">
+<!-- Center Column: Transcript Stream (approx 7 columns) -->
+<section class="flex-grow w-7/12 border-r border-outline-variant flex flex-col relative bg-surface">
+<!-- Pinned Topic Pill Header -->
+<div class="absolute top-0 left-0 right-0 h-12 bg-surface/80 backdrop-blur-md border-b border-outline-variant flex items-center px-container-padding gap-2 z-10">
+<span class="material-symbols-outlined text-primary text-[16px]">psychology</span>
+<span class="font-label-caps text-label-caps text-primary tracking-wider">CURRENT TOPIC:</span>
+<div class="px-2 py-0.5 rounded border border-primary/30 bg-primary/10 font-body-md text-on-surface ml-2">Q3 Resource Allocation</div>
+</div>
+<!-- Transcript Scroll Area -->
+<div class="flex-grow overflow-y-auto px-container-padding pb-32 pt-16 scroll-smooth" id="transcript-container">
+<!-- Transcript Block 1 -->
+<div class="flex gap-4 mb-stack-md hover:bg-surface-variant/30 p-2 -mx-2 rounded transition-colors group">
+<div class="w-12 shrink-0 pt-1 text-right">
+<span class="font-transcript-mono text-transcript-mono text-on-surface-variant/50">43:02</span>
+</div>
+<div class="flex-grow">
+<div class="flex items-baseline gap-2 mb-1">
+<span class="font-headline-sm text-[14px] font-bold text-primary">Sarah Chen</span>
+</div>
+<p class="font-transcript-mono text-transcript-mono text-on-surface">If we look at the engineering bandwidth for Q3, we're already redlining on the core platform migration. Taking on the new enterprise tier features means we have to pause something else.</p>
+</div>
+</div>
+<!-- Transcript Block 2 -->
+<div class="flex gap-4 mb-stack-md hover:bg-surface-variant/30 p-2 -mx-2 rounded transition-colors group">
+<div class="w-12 shrink-0 pt-1 text-right">
+<span class="font-transcript-mono text-transcript-mono text-on-surface-variant/50">43:45</span>
+</div>
+<div class="flex-grow">
+<div class="flex items-baseline gap-2 mb-1">
+<span class="font-headline-sm text-[14px] font-bold text-surface-tint">Marcus V.</span>
+</div>
+<p class="font-transcript-mono text-transcript-mono text-on-surface">I hear that, but sales is screaming for the enterprise features. We just lost the Acme deal because we lack SOC2 compliance in the reporting module.</p>
+</div>
+</div>
+<!-- Transcript Block 3 - Active/Typing -->
+<div class="flex gap-4 mb-stack-md hover:bg-surface-variant/30 p-2 -mx-2 rounded transition-colors bg-surface-variant/10 border-l-2 border-primary">
+<div class="w-12 shrink-0 pt-1 text-right">
+<span class="font-transcript-mono text-transcript-mono text-primary/70">44:10</span>
+</div>
+<div class="flex-grow">
+<div class="flex items-baseline gap-2 mb-1">
+<span class="font-headline-sm text-[14px] font-bold text-primary">Sarah Chen</span>
+<span class="w-2 h-2 rounded-full bg-primary live-indicator ml-2"></span>
+</div>
+<p class="font-transcript-mono text-transcript-mono text-on-surface">We can prioritize SOC2, but that means the analytics dashboard refresh slips to Q4. Are we aligned on taking that hit? Because right now it feels like we're trying to boil the ocean and the team is burning out...<span class="animate-pulse inline-block w-2 h-4 bg-primary/50 ml-1 translate-y-1"></span></p>
+</div>
+</div>
+</div>
+<!-- Bottom Action Bar (Remote Control overlay) -->
+<div class="absolute bottom-0 left-0 right-0 h-24 bg-surface-container border-t border-outline-variant flex items-center justify-center gap-4 px-container-padding">
+<button class="h-12 px-6 rounded-full bg-surface-variant border border-outline-variant hover:bg-surface-bright flex items-center gap-2 text-on-surface transition-colors shadow-sm">
+<span class="material-symbols-outlined text-primary">bookmark</span>
+<span class="font-headline-sm text-[14px]">Bookmark</span>
+</button>
+<button class="h-12 px-6 rounded-full bg-surface-variant border border-outline-variant hover:bg-surface-bright flex items-center gap-2 text-on-surface transition-colors shadow-sm">
+<span class="material-symbols-outlined text-primary-container">check_circle</span>
+<span class="font-headline-sm text-[14px]">Action Item</span>
+</button>
+<button class="h-12 px-6 rounded-full bg-surface-variant border border-outline-variant hover:bg-surface-bright flex items-center gap-2 text-on-surface transition-colors shadow-sm">
+<span class="material-symbols-outlined text-error">warning</span>
+<span class="font-headline-sm text-[14px]">Flag Risk</span>
+</button>
+</div>
+</section>
+<!-- Right Column: Coach Panel (approx 5 columns) -->
+<aside class="w-5/12 bg-surface-container-low flex flex-col h-full overflow-hidden border-l border-outline-variant/50">
+<div class="p-container-padding flex flex-col h-full gap-stack-lg overflow-y-auto">
+<!-- 1. Rolling Summary -->
+<div class="flex flex-col gap-stack-sm">
+<div class="flex items-center gap-2 mb-2">
+<span class="material-symbols-outlined text-on-surface-variant text-[18px]">subject</span>
+<h2 class="font-label-caps text-label-caps text-on-surface-variant">ROLLING SUMMARY</h2>
+</div>
+<div class="bg-surface-container-high rounded-xl p-4 border border-outline-variant shadow-sm relative overflow-hidden">
+<!-- AI processing subtle indicator line at top -->
+<div class="absolute top-0 left-0 h-1 bg-gradient-to-r from-transparent via-primary/50 to-transparent w-full animate-[translateX_2s_infinite]"></div>
+<ul class="space-y-3 font-body-md text-on-surface">
+<li class="flex items-start gap-2">
+<span class="material-symbols-outlined text-[16px] text-primary shrink-0 mt-0.5">adjust</span>
+<div>
+                                    Engineering (Sarah) indicates bandwidth is exhausted due to core platform migration. 
+                                    <span class="font-citation text-citation text-primary bg-primary/10 px-1 rounded ml-1 cursor-pointer hover:bg-primary/20">[43:02]</span>
+</div>
+</li>
+<li class="flex items-start gap-2">
+<span class="material-symbols-outlined text-[16px] text-primary shrink-0 mt-0.5">adjust</span>
+<div>
+                                    Sales (Marcus) urgently requesting enterprise features (SOC2) after losing Acme deal.
+                                    <span class="font-citation text-citation text-primary bg-primary/10 px-1 rounded ml-1 cursor-pointer hover:bg-primary/20">[43:45]</span>
+</div>
+</li>
+<li class="flex items-start gap-2">
+<span class="material-symbols-outlined text-[16px] text-surface-tint shrink-0 mt-0.5">sync</span>
+<div class="text-on-surface-variant">
+<span class="animate-pulse">Synthesizing current trade-off discussion...</span>
+</div>
+</li>
+</ul>
+</div>
+</div>
+<!-- 2. Anticipate Cards -->
+<div class="flex flex-col gap-stack-sm">
+<div class="flex items-center justify-between mb-2">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-surface-tint text-[18px]">lightbulb</span>
+<h2 class="font-label-caps text-label-caps text-surface-tint">COACH: ANTICIPATE</h2>
+</div>
+</div>
+<div class="grid grid-cols-1 gap-3">
+<div class="bg-surface border border-outline-variant rounded-lg p-3 hover:border-surface-tint/50 transition-colors cursor-pointer flex gap-3 items-start">
+<div class="p-2 bg-surface-variant rounded-md shrink-0">
+<span class="material-symbols-outlined text-on-surface text-[18px]">history</span>
+</div>
+<div>
+<h3 class="font-headline-sm text-[14px] text-on-surface mb-1">Recall Previous Decision</h3>
+<p class="font-body-md text-[13px] text-on-surface-variant">In last month's roadmap sync, leadership agreed to freeze net-new features until platform migration hits 80% completion.</p>
+</div>
+</div>
+<div class="bg-surface border border-outline-variant rounded-lg p-3 hover:border-surface-tint/50 transition-colors cursor-pointer flex gap-3 items-start">
+<div class="p-2 bg-error-container/20 border border-error/20 rounded-md shrink-0">
+<span class="material-symbols-outlined text-error text-[18px]">gavel</span>
+</div>
+<div>
+<h3 class="font-headline-sm text-[14px] text-error mb-1">Scope Creep Alert</h3>
+<p class="font-body-md text-[13px] text-on-surface-variant">Adding SOC2 now introduces 3 weeks of scope. Recommend moving analytics refresh to Q4 to accommodate.</p>
+</div>
+</div>
+</div>
+</div>
+<!-- 3. Agent Clarification -->
+<div class="flex flex-col gap-stack-sm mt-auto pb-4">
+<div class="flex items-center gap-2 mb-2">
+<span class="material-symbols-outlined text-primary-container text-[18px]">forum</span>
+<h2 class="font-label-caps text-label-caps text-primary-container">SUGGESTED CLARIFICATIONS</h2>
+</div>
+<div class="bg-surface-container-high rounded-lg border border-outline-variant p-1 flex flex-col gap-1">
+<button class="w-full text-left px-3 py-2 rounded-md hover:bg-surface-variant flex items-center justify-between group transition-colors">
+<span class="font-body-md text-[13px] text-on-surface group-hover:text-primary transition-colors">"Sarah, if we move Analytics to Q4, does that free up enough bandwidth for SOC2?"</span>
+<span class="material-symbols-outlined text-[16px] text-on-surface-variant opacity-0 group-hover:opacity-100 transition-opacity">add_comment</span>
+</button>
+<div class="h-px w-full bg-outline-variant/30"></div>
+<button class="w-full text-left px-3 py-2 rounded-md hover:bg-surface-variant flex items-center justify-between group transition-colors">
+<span class="font-body-md text-[13px] text-on-surface group-hover:text-primary transition-colors">"Marcus, is Acme deal definitively lost, or pending SOC2 timeline?"</span>
+<span class="material-symbols-outlined text-[16px] text-on-surface-variant opacity-0 group-hover:opacity-100 transition-opacity">add_comment</span>
+</button>
+</div>
+</div>
+</div>
+</aside>
+</main>
+<script>
+        // Simple auto-scroll for transcript area to simulate live feed
+        const transcriptContainer = document.getElementById('transcript-container');
+        if(transcriptContainer) {
+            transcriptContainer.scrollTop = transcriptContainer.scrollHeight;
+        }
+    </script>
+</body></html>

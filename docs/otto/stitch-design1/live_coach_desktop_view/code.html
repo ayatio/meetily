@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Otto AI - Live Coach View</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&amp;family=Inter:wght@400;500&amp;family=JetBrains+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "outline": "#918fa0",
+                        "on-primary-fixed": "#0c006b",
+                        "primary-fixed": "#e2dfff",
+                        "on-primary-fixed-variant": "#332dbc",
+                        "on-primary-container": "#f4f1ff",
+                        "inverse-on-surface": "#2f3034",
+                        "background": "#121317",
+                        "error": "#ffb4ab",
+                        "on-surface": "#e3e2e7",
+                        "on-secondary-fixed-variant": "#474648",
+                        "on-error-container": "#ffdad6",
+                        "secondary-fixed": "#e4e2e4",
+                        "primary": "#c2c1ff",
+                        "tertiary": "#c8c6c8",
+                        "secondary-container": "#49494b",
+                        "on-secondary": "#303032",
+                        "secondary-fixed-dim": "#c8c6c8",
+                        "on-tertiary": "#303032",
+                        "on-tertiary-fixed": "#1b1b1d",
+                        "outline-variant": "#464554",
+                        "primary-container": "#5e5ce6",
+                        "on-tertiary-container": "#f5f2f4",
+                        "on-secondary-fixed": "#1b1b1d",
+                        "inverse-surface": "#e3e2e7",
+                        "on-error": "#690005",
+                        "surface-tint": "#c2c1ff",
+                        "on-tertiary-fixed-variant": "#474649",
+                        "tertiary-container": "#6f6e70",
+                        "surface-bright": "#38393d",
+                        "primary-fixed-dim": "#c2c1ff",
+                        "inverse-primary": "#4d4ad5",
+                        "secondary": "#c8c6c8",
+                        "on-primary": "#1800a7",
+                        "on-background": "#e3e2e7",
+                        "surface-dim": "#121317",
+                        "surface-container-lowest": "#0d0e12",
+                        "surface-container-high": "#292a2e",
+                        "surface-container": "#1e1f23",
+                        "surface-variant": "#343539",
+                        "error-container": "#93000a",
+                        "tertiary-fixed-dim": "#c8c6c8",
+                        "tertiary-fixed": "#e4e2e4",
+                        "surface-container-highest": "#343539",
+                        "on-surface-variant": "#c7c4d7",
+                        "surface-container-low": "#1a1b1f",
+                        "surface": "#121317",
+                        "on-secondary-container": "#b9b8ba"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "stack-lg": "32px",
+                        "container-padding": "24px",
+                        "unit": "4px",
+                        "gutter": "16px",
+                        "stack-sm": "8px",
+                        "stack-md": "16px"
+                    },
+                    "fontFamily": {
+                        "headline-md": ["Geist"],
+                        "citation": ["JetBrains Mono"],
+                        "headline-sm": ["Geist"],
+                        "transcript-mono": ["JetBrains Mono"],
+                        "display": ["Geist"],
+                        "label-caps": ["JetBrains Mono"],
+                        "body-md": ["Inter"],
+                        "body-lg": ["Inter"]
+                    },
+                    "fontSize": {
+                        "headline-md": ["24px", { "lineHeight": "1.3", "fontWeight": "500" }],
+                        "citation": ["12px", { "lineHeight": "1.4", "fontWeight": "500" }],
+                        "headline-sm": ["20px", { "lineHeight": "1.4", "fontWeight": "500" }],
+                        "transcript-mono": ["14px", { "lineHeight": "1.7", "letterSpacing": "-0.01em", "fontWeight": "400" }],
+                        "display": ["32px", { "lineHeight": "1.2", "letterSpacing": "-0.02em", "fontWeight": "600" }],
+                        "label-caps": ["11px", { "lineHeight": "1.2", "letterSpacing": "0.05em", "fontWeight": "600" }],
+                        "body-md": ["14px", { "lineHeight": "1.5", "fontWeight": "400" }],
+                        "body-lg": ["16px", { "lineHeight": "1.6", "fontWeight": "400" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        /* Custom scrollbar for minimalist look */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #343539;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #464554;
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background h-screen overflow-hidden flex font-body-md">
+<!-- Column 1: Side Nav Bar -->
+<nav class="h-screen w-64 fixed left-0 top-0 bg-surface-container-low border-r border-outline-variant flex flex-col py-container-padding px-stack-md z-20">
+<!-- Brand Header -->
+<div class="flex items-center gap-3 mb-stack-lg px-2">
+<div class="w-8 h-8 rounded-full bg-primary-container flex items-center justify-center text-on-primary-container">
+<span class="material-symbols-outlined text-sm">grain</span>
+</div>
+<div>
+<h1 class="font-headline-md text-headline-md text-primary font-bold">Otto AI</h1>
+<p class="font-label-caps text-label-caps text-on-surface-variant">Second Brain</p>
+</div>
+</div>
+<!-- Navigation Links -->
+<ul class="flex flex-col gap-1 flex-1">
+<li>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-on-surface-variant hover:bg-surface-variant transition-colors duration-200" href="#">
+<span class="material-symbols-outlined">inventory_2</span>
+<span class="font-headline-sm text-[15px] font-medium">Vault</span>
+</a>
+</li>
+<li>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-on-primary-container bg-primary-container transition-transform duration-100 scale-[0.98]" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">video_chat</span>
+<span class="font-headline-sm text-[15px] font-medium">Meetings</span>
+</a>
+</li>
+<li>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-on-surface-variant hover:bg-surface-variant transition-colors duration-200" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span class="font-headline-sm text-[15px] font-medium">Settings</span>
+</a>
+</li>
+</ul>
+<!-- Bottom Profile & CTA -->
+<div class="mt-auto border-t border-outline-variant pt-stack-md">
+<button class="w-full py-2 mb-4 rounded-lg bg-surface-variant text-on-surface hover:bg-surface-bright transition-colors flex items-center justify-center gap-2 font-headline-sm text-[14px]">
+<span class="material-symbols-outlined text-[18px]">add</span>
+                New Recording
+            </button>
+<div class="flex items-center gap-3 px-2">
+<img class="w-8 h-8 rounded-full object-cover" data-alt="A small, professional headshot of an executive in dark minimalist lighting, high quality corporate aesthetic, muted tones." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDcSiEvXEnDE15JPOFu4r5xBqpZtK2lOW-cXx9cMpCpbEyWWjAedRQNV8p5KorZA8xBXpW8APHxfjJtl-qoKvn3jz8kUYc0QJRfbEVJn__0HjCPgByC5wX6cKi36QeJYmBZbbSBBzQdIay2eHbh2ek9xW7nQB7uG8zrV6XPjBdIOc8j5ISHebag4vhG2IlgKNSQDg9l02zv_y81xUsWqT5gvo2SWygzZ96CGt-N4rKq9rNKqIDw8qJy"/>
+<div class="flex-1 overflow-hidden">
+<p class="font-body-md text-body-md text-on-surface truncate">Alex Chen</p>
+<p class="font-label-caps text-label-caps text-on-surface-variant truncate">User profile photo</p>
+</div>
+</div>
+</div>
+</nav>
+<!-- Main Content Area -->
+<main class="ml-64 flex-1 flex flex-col h-screen relative">
+<!-- Top App Bar -->
+<header class="h-16 bg-background border-b border-outline-variant flex justify-between items-center px-container-padding shrink-0 z-10 w-full">
+<div class="flex items-center gap-4">
+<!-- LIVE Indicator & Timer -->
+<div class="flex items-center gap-2 bg-surface-container py-1.5 px-3 rounded-full border border-outline-variant">
+<div class="relative w-2.5 h-2.5">
+<span class="absolute inline-flex h-full w-full rounded-full bg-error opacity-75 animate-ping"></span>
+<span class="relative inline-flex rounded-full w-2.5 h-2.5 bg-error"></span>
+</div>
+<span class="font-label-caps text-label-caps text-error tracking-widest">LIVE</span>
+<span class="font-transcript-mono text-[13px] text-on-surface ml-1">00:45:12</span>
+</div>
+<div class="h-4 w-[1px] bg-outline-variant mx-2"></div>
+<h2 class="font-headline-sm text-headline-sm text-on-surface">Product Strategy Sync</h2>
+</div>
+<div class="flex items-center gap-4 text-on-surface-variant">
+<!-- Trailing Icon Actions -->
+<button class="hover:text-on-surface transition-opacity hover:opacity-80 cursor-pointer">
+<span class="material-symbols-outlined">sensors</span>
+</button>
+<button class="hover:text-on-surface transition-opacity hover:opacity-80 cursor-pointer">
+<span class="material-symbols-outlined">sync</span>
+</button>
+<div class="h-4 w-[1px] bg-outline-variant"></div>
+<!-- Secondary Action -->
+<button class="font-body-md text-body-md hover:text-on-surface transition-opacity hover:opacity-80">Support</button>
+</div>
+</header>
+<!-- Two Column Layout for Transcript & Coach Panel -->
+<div class="flex-1 flex overflow-hidden">
+<!-- Column 2: Main Transcript Area -->
+<div class="flex-1 relative flex flex-col bg-background">
+<!-- Transcript Scroll Area -->
+<div class="flex-1 overflow-y-auto px-container-padding py-stack-lg pb-32">
+<div class="max-w-3xl mx-auto flex flex-col gap-stack-lg">
+<!-- Transcript Item -->
+<div class="flex gap-4 group">
+<div class="w-16 shrink-0 text-right pt-1">
+<span class="font-citation text-citation text-outline">42:10</span>
+</div>
+<div class="flex-1 pb-4 border-b border-surface-variant">
+<div class="flex items-center gap-2 mb-1">
+<span class="font-transcript-mono text-transcript-mono font-bold text-on-surface">Marcus T.</span>
+<span class="font-label-caps text-label-caps text-on-secondary-container px-1.5 py-0.5 bg-surface-container rounded">LEGAL</span>
+</div>
+<p class="font-transcript-mono text-transcript-mono text-on-surface-variant leading-relaxed">
+                                    We need to ensure the new data policy aligns perfectly with the upcoming GDPR revisions. Any deviation might expose us to compliance risks in the next quarter.
+                                </p>
+</div>
+</div>
+<!-- Transcript Item (Highlighted / Bookmarked) -->
+<div class="flex gap-4 group relative bg-surface-container-low -mx-4 px-4 py-3 rounded-lg border border-outline-variant">
+<!-- Bookmark Indicator -->
+<div class="absolute -left-3 top-4 w-6 h-6 bg-primary-container rounded-full flex items-center justify-center border-2 border-background z-10 shadow-lg">
+<span class="material-symbols-outlined text-[14px] text-on-primary-container" style="font-variation-settings: 'FILL' 1;">bookmark</span>
+</div>
+<div class="w-16 shrink-0 text-right pt-1">
+<span class="font-citation text-citation text-primary">43:05</span>
+</div>
+<div class="flex-1 pb-2">
+<div class="flex items-center gap-2 mb-1">
+<span class="font-transcript-mono text-transcript-mono font-bold text-primary">Sarah J.</span>
+<span class="font-label-caps text-label-caps text-on-secondary-container px-1.5 py-0.5 bg-surface-container rounded">PRODUCT</span>
+</div>
+<p class="font-transcript-mono text-transcript-mono text-on-surface leading-relaxed">
+                                    Agreed. Are we applying this universally across the platform, or just phasing it into the European markets first to test the impact on user friction?
+                                </p>
+<div class="mt-3 flex gap-2">
+<span class="inline-flex items-center gap-1 font-label-caps text-label-caps text-primary bg-primary-container/10 px-2 py-1 rounded border border-primary/20">
+<span class="material-symbols-outlined text-[12px]">flag</span> KEY DECISION
+                                    </span>
+</div>
+</div>
+</div>
+<!-- Transcript Item -->
+<div class="flex gap-4 group">
+<div class="w-16 shrink-0 text-right pt-1">
+<span class="font-citation text-citation text-outline">43:20</span>
+</div>
+<div class="flex-1 pb-4">
+<div class="flex items-center gap-2 mb-1">
+<span class="font-transcript-mono text-transcript-mono font-bold text-on-surface">Marcus T.</span>
+<span class="font-label-caps text-label-caps text-on-secondary-container px-1.5 py-0.5 bg-surface-container rounded">LEGAL</span>
+</div>
+<p class="font-transcript-mono text-transcript-mono text-on-surface-variant leading-relaxed">
+                                    I recommend a phased approach starting Q3. Let's isolate the EU instances and run the compliance matrix there before global rollout.
+                                </p>
+</div>
+</div>
+<!-- Live typing indicator -->
+<div class="flex gap-4 opacity-50 mt-4">
+<div class="w-16 shrink-0 text-right pt-1">
+<span class="font-citation text-citation text-outline">45:12</span>
+</div>
+<div class="flex-1 flex items-center gap-1 pt-1.5">
+<div class="w-2 h-2 bg-on-surface-variant rounded-full animate-bounce" style="animation-delay: 0ms;"></div>
+<div class="w-2 h-2 bg-on-surface-variant rounded-full animate-bounce" style="animation-delay: 150ms;"></div>
+<div class="w-2 h-2 bg-on-surface-variant rounded-full animate-bounce" style="animation-delay: 300ms;"></div>
+</div>
+</div>
+</div>
+</div>
+<!-- Bottom Fade Overlay -->
+<div class="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-background to-transparent pointer-events-none"></div>
+</div>
+<!-- Column 3: Coach Panel (Right Side) -->
+<aside class="w-[340px] shrink-0 bg-surface-container-low border-l border-outline-variant flex flex-col z-10 shadow-[-4px_0_24px_rgba(0,0,0,0.2)]">
+<!-- Panel Header -->
+<div class="px-container-padding py-stack-md border-b border-outline-variant flex items-center justify-between bg-surface-container-highest">
+<div class="flex items-center gap-2 text-primary">
+<span class="material-symbols-outlined text-[20px]">smart_toy</span>
+<h3 class="font-headline-sm text-[16px] font-semibold">Otto Coach</h3>
+</div>
+<span class="flex h-2 w-2">
+<span class="animate-ping absolute inline-flex h-2 w-2 rounded-full bg-primary opacity-75"></span>
+<span class="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
+</span>
+</div>
+<!-- Panel Content -->
+<div class="flex-1 overflow-y-auto p-container-padding flex flex-col gap-stack-md">
+<!-- Agent Clarification Card (Glassmorphism/Bento style) -->
+<div class="bg-surface-container rounded-xl border border-outline-variant p-4 shadow-lg relative overflow-hidden group">
+<!-- Decorative glow -->
+<div class="absolute -top-10 -right-10 w-32 h-32 bg-primary-container rounded-full blur-[40px] opacity-20 pointer-events-none"></div>
+<div class="flex items-center gap-2 mb-3">
+<span class="material-symbols-outlined text-primary text-[18px]">psychology_alt</span>
+<span class="font-label-caps text-label-caps text-primary tracking-widest">AGENT CLARIFICATION</span>
+</div>
+<p class="font-body-md text-body-md text-on-surface mb-4">
+                            Sarah J. asked about the deployment scope. Should I log the decision as restricted to EU instances or universally applied?
+                        </p>
+<div class="flex flex-col gap-2">
+<button class="w-full py-2 px-4 rounded-lg bg-surface border border-outline-variant text-on-surface hover:bg-surface-variant hover:border-primary transition-all duration-200 font-body-md text-[13px] flex justify-between items-center group/btn">
+                                JUST EU
+                                <span class="material-symbols-outlined text-[16px] opacity-0 group-hover/btn:opacity-100 transition-opacity text-primary">check_circle</span>
+</button>
+<button class="w-full py-2 px-4 rounded-lg bg-surface border border-outline-variant text-on-surface hover:bg-surface-variant hover:border-primary transition-all duration-200 font-body-md text-[13px] flex justify-between items-center group/btn">
+                                ALL REGIONS
+                                <span class="material-symbols-outlined text-[16px] opacity-0 group-hover/btn:opacity-100 transition-opacity text-primary">check_circle</span>
+</button>
+</div>
+</div>
+<!-- Context Note -->
+<div class="px-2 py-3 border-l-2 border-surface-variant">
+<p class="font-body-md text-[13px] text-on-surface-variant italic">
+                            "Otto is currently generating a summary for the 'Compliance' agenda item."
+                        </p>
+</div>
+</div>
+<!-- Bottom CTA -->
+<div class="p-container-padding border-t border-outline-variant bg-surface-container-highest mt-auto">
+<button class="w-full py-3 rounded-lg bg-primary-container text-on-primary-container font-headline-sm text-[15px] font-semibold hover:bg-primary transition-colors shadow-[0_0_15px_rgba(94,92,230,0.3)] flex items-center justify-center gap-2">
+<span class="material-symbols-outlined text-[18px]">cloud_sync</span>
+                        Stop &amp; Sync to Vault
+                    </button>
+</div>
+</aside>
+</div>
+</main>
+</body></html>

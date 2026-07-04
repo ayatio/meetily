@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Live Coach View - Otto Scribe</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&amp;family=Inter:wght@400;500&amp;family=JetBrains+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-surface": "#e3e2e7",
+                        "secondary-container": "#49494b",
+                        "surface-container-lowest": "#0d0e12",
+                        "secondary-fixed-dim": "#c8c6c8",
+                        "secondary": "#c8c6c8",
+                        "surface-dim": "#121317",
+                        "on-error-container": "#ffdad6",
+                        "primary-container": "#5e5ce6",
+                        "inverse-primary": "#4d4ad5",
+                        "on-primary-fixed-variant": "#332dbc",
+                        "surface": "#121317",
+                        "on-tertiary-fixed": "#1b1b1d",
+                        "inverse-on-surface": "#2f3034",
+                        "on-primary-container": "#f4f1ff",
+                        "inverse-surface": "#e3e2e7",
+                        "on-secondary": "#303032",
+                        "on-tertiary": "#303032",
+                        "on-surface-variant": "#c7c4d7",
+                        "on-tertiary-fixed-variant": "#474649",
+                        "background": "#121317",
+                        "tertiary-fixed": "#e4e2e4",
+                        "error-container": "#93000a",
+                        "surface-bright": "#38393d",
+                        "primary-fixed": "#e2dfff",
+                        "on-primary": "#1800a7",
+                        "primary": "#c2c1ff",
+                        "error": "#ffb4ab",
+                        "secondary-fixed": "#e4e2e4",
+                        "outline-variant": "#464554",
+                        "on-error": "#690005",
+                        "on-secondary-fixed": "#1b1b1d",
+                        "outline": "#918fa0",
+                        "tertiary-container": "#6f6e70",
+                        "on-background": "#e3e2e7",
+                        "tertiary-fixed-dim": "#c8c6c8",
+                        "surface-container-highest": "#343539",
+                        "surface-container-high": "#292a2e",
+                        "surface-variant": "#343539",
+                        "surface-container-low": "#1a1b1f",
+                        "on-primary-fixed": "#0c006b",
+                        "primary-fixed-dim": "#c2c1ff",
+                        "surface-container": "#1e1f23",
+                        "tertiary": "#c8c6c8",
+                        "on-secondary-container": "#b9b8ba",
+                        "surface-tint": "#c2c1ff",
+                        "on-tertiary-container": "#f5f2f4",
+                        "on-secondary-fixed-variant": "#474648",
+                        
+                        // Adding custom colors for the Live Coach view specific requirements
+                        "coach-red": "#ff4d4d",
+                        "coach-green": "#4ade80",
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "stack-sm": "8px",
+                        "stack-lg": "32px",
+                        "stack-md": "16px",
+                        "gutter": "16px",
+                        "container-padding": "24px",
+                        "unit": "4px"
+                    },
+                    "fontFamily": {
+                        "transcript-mono": ["JetBrains Mono", "monospace"],
+                        "label-caps": ["JetBrains Mono", "monospace"],
+                        "headline-md": ["Geist", "sans-serif"],
+                        "body-lg": ["Inter", "sans-serif"],
+                        "headline-sm": ["Geist", "sans-serif"],
+                        "display": ["Geist", "sans-serif"],
+                        "body-md": ["Inter", "sans-serif"],
+                        "citation": ["JetBrains Mono", "monospace"]
+                    },
+                    "fontSize": {
+                        "transcript-mono": ["14px", { "lineHeight": "1.7", "letterSpacing": "-0.01em", "fontWeight": "400" }],
+                        "label-caps": ["11px", { "lineHeight": "1.2", "letterSpacing": "0.05em", "fontWeight": "600" }],
+                        "headline-md": ["24px", { "lineHeight": "1.3", "fontWeight": "500" }],
+                        "body-lg": ["16px", { "lineHeight": "1.6", "fontWeight": "400" }],
+                        "headline-sm": ["20px", { "lineHeight": "1.4", "fontWeight": "500" }],
+                        "display": ["32px", { "lineHeight": "1.2", "letterSpacing": "-0.02em", "fontWeight": "600" }],
+                        "body-md": ["14px", { "lineHeight": "1.5", "fontWeight": "400" }],
+                        "citation": ["12px", { "lineHeight": "1.4", "fontWeight": "500" }]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        /* Pulse animation for live indicator */
+        @keyframes pulse-ring {
+            0% { transform: scale(0.8); opacity: 0.5; }
+            80% { transform: scale(1.5); opacity: 0; }
+            100% { transform: scale(1.5); opacity: 0; }
+        }
+        .live-dot::before {
+            content: '';
+            position: absolute;
+            inset: -4px;
+            border-radius: 50%;
+            background-color: theme('colors.coach-red');
+            animation: pulse-ring 2s cubic-bezier(0.215, 0.61, 0.355, 1) infinite;
+        }
+        
+        /* Smooth scrolling for transcript */
+        .transcript-container {
+            scroll-behavior: smooth;
+        }
+        
+        /* Glassmorphism for floating elements */
+        .glass-panel {
+            background: rgba(41, 42, 46, 0.85);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-top: 1px solid theme('colors.outline-variant');
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+</head>
+<body class="bg-background text-on-surface h-screen flex flex-col overflow-hidden font-body-md antialiased">
+<!-- Top Navigation Anchor - Implicitly suppressing bottom nav as this is a focused task -->
+<header class="bg-surface dark:bg-surface border-b border-outline-variant dark:border-outline-variant flex justify-between items-center w-full px-gutter h-16 shrink-0 z-20 sticky top-0">
+<div class="flex items-center gap-3">
+<button aria-label="Back" class="text-on-surface-variant hover:text-primary transition-colors flex items-center justify-center rounded-full p-1 hover:bg-surface-container-high">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">arrow_back</span>
+</button>
+<div class="flex flex-col">
+<div class="flex items-center gap-2">
+<span class="font-headline-sm text-headline-sm text-primary font-bold">Otto Scribe</span>
+<span class="text-on-surface-variant mx-1">·</span>
+<span class="font-body-md text-body-md text-on-surface">Strategy Alignment</span>
+</div>
+</div>
+</div>
+<!-- Live Status & Duration -->
+<div class="flex items-center gap-4 bg-surface-container-low px-3 py-1.5 rounded-full border border-outline-variant">
+<div class="flex items-center gap-2">
+<div class="relative flex items-center justify-center w-2 h-2">
+<div class="absolute w-2 h-2 rounded-full bg-coach-red live-dot"></div>
+</div>
+<span class="font-label-caps text-label-caps text-on-surface">LIVE</span>
+</div>
+<span class="text-on-surface-variant font-citation text-citation">00:42:15</span>
+</div>
+</header>
+<!-- Main Canvas: Fluid on Mobile, Fixed Grid on Desktop -->
+<main class="flex-1 flex flex-col md:flex-row relative overflow-hidden">
+<!-- Left/Main Column: Transcript Feed -->
+<section class="flex-1 w-full md:w-1/2 lg:w-3/5 xl:w-2/3 h-full flex flex-col bg-surface-container-lowest">
+<!-- Sticky Context Header -->
+<div class="px-gutter py-3 border-b border-surface-container-high bg-surface-container-lowest/90 backdrop-blur-sm z-10 flex justify-between items-center">
+<span class="font-label-caps text-label-caps text-on-surface-variant">REAL-TIME TRANSCRIPT</span>
+<div class="flex gap-2">
+<button class="text-on-surface-variant hover:text-on-surface p-1 rounded hover:bg-surface-container-high transition-colors" id="autoScrollBtn" title="Auto-scroll">
+<span class="material-symbols-outlined text-sm">vertical_align_bottom</span>
+</button>
+</div>
+</div>
+<!-- Scrollable Transcript Area -->
+<div class="flex-1 overflow-y-auto px-gutter py-stack-md transcript-container space-y-stack-md pb-32" id="transcriptFeed">
+<!-- Transcript Segment 1 -->
+<div class="flex gap-3 group">
+<div class="w-12 shrink-0 text-right">
+<span class="font-citation text-citation text-on-surface-variant">40:12</span>
+</div>
+<div class="flex-1 border-l-2 border-transparent pl-3 pb-2 transition-colors">
+<div class="flex items-baseline gap-2 mb-1">
+<span class="font-body-md text-body-md font-bold text-on-surface">Sarah J. • Product</span>
+<span class="font-label-caps text-label-caps text-primary bg-primary-container/20 px-1.5 rounded text-[9px]">PRODUCT</span>
+</div>
+<p class="font-transcript-mono text-transcript-mono text-on-surface-variant group-hover:text-on-surface transition-colors">
+                            So, if we look at the Q3 metrics, the drop-off in the onboarding funnel is still our biggest leak. We've tried optimizing the copy, but I think it's a structural issue with the required fields.
+                        </p>
+<div class="mt-2 flex gap-3 opacity-0 group-hover:opacity-100 transition-opacity"><button class="text-on-surface-variant hover:text-primary flex items-center gap-1 font-label-caps text-[10px]"><span class="material-symbols-outlined text-[14px]">flag</span> FLAG</button><button class="text-on-surface-variant hover:text-primary flex items-center gap-1 font-label-caps text-[10px]"><span class="material-symbols-outlined text-[14px]">help</span> CLARIFY</button><button class="text-on-surface-variant hover:text-primary flex items-center gap-1 font-label-caps text-[10px]"><span class="material-symbols-outlined text-[14px]">bolt</span> ACTION</button></div></div>
+</div>
+<!-- Transcript Segment 2 -->
+<div class="flex gap-3 group">
+<div class="w-12 shrink-0 text-right">
+<span class="font-citation text-citation text-on-surface-variant">40:45</span>
+</div>
+<div class="flex-1 border-l-2 border-transparent pl-3 pb-2 transition-colors">
+<div class="flex items-baseline gap-2 mb-1">
+<span class="font-body-md text-body-md font-bold text-on-surface">Marcus T. • Legal</span>
+</div>
+<p class="font-transcript-mono text-transcript-mono text-on-surface-variant group-hover:text-on-surface transition-colors">
+                            I agree. Legal is pushing back on removing the secondary compliance check, though. They want it upfront rather than later in the user journey to mitigate risk.
+                        </p>
+<div class="mt-2 flex gap-3 opacity-0 group-hover:opacity-100 transition-opacity"><button class="text-on-surface-variant hover:text-primary flex items-center gap-1 font-label-caps text-[10px]"><span class="material-symbols-outlined text-[14px]">flag</span> FLAG</button><button class="text-on-surface-variant hover:text-primary flex items-center gap-1 font-label-caps text-[10px]"><span class="material-symbols-outlined text-[14px]">help</span> CLARIFY</button><button class="text-on-surface-variant hover:text-primary flex items-center gap-1 font-label-caps text-[10px]"><span class="material-symbols-outlined text-[14px]">bolt</span> ACTION</button></div></div>
+</div>
+<!-- Transcript Segment 3 (Active/Highlight) -->
+<div class="flex gap-3 group bg-surface-container-low -mx-gutter px-gutter py-2 border-y border-surface-container-highest">
+<div class="w-12 shrink-0 text-right mt-1">
+<span class="font-citation text-citation text-primary font-bold">41:10</span>
+</div>
+<div class="flex-1 border-l-2 border-primary pl-3 pb-1">
+<div class="flex items-baseline gap-2 mb-1">
+<span class="font-body-md text-body-md font-bold text-on-surface">Sarah J. • Product</span>
+</div>
+<p class="font-transcript-mono text-transcript-mono text-on-surface">
+                            Right, but if they never finish onboarding, the risk is zero because we have no users. Can we propose a staged compliance check? Basic info first to get them into the dashboard, and full KYC only when they initiate a transaction?
+                        </p>
+<!-- Inline Action Tag -->
+<div class="mt-2 flex gap-2">
+<span class="inline-flex items-center gap-1 bg-surface-container-high border border-outline-variant rounded px-2 py-0.5 font-label-caps text-label-caps text-on-surface-variant cursor-pointer hover:bg-surface-bright transition-colors">
+<span class="material-symbols-outlined text-[14px]">bookmark</span>
+                                BOOKMARK
+                            </span>
+</div>
+<div class="mt-2 flex gap-3 opacity-0 group-hover:opacity-100 transition-opacity"><button class="text-on-surface-variant hover:text-primary flex items-center gap-1 font-label-caps text-[10px]"><span class="material-symbols-outlined text-[14px]">flag</span> FLAG</button><button class="text-on-surface-variant hover:text-primary flex items-center gap-1 font-label-caps text-[10px]"><span class="material-symbols-outlined text-[14px]">help</span> CLARIFY</button><button class="text-on-surface-variant hover:text-primary flex items-center gap-1 font-label-caps text-[10px]"><span class="material-symbols-outlined text-[14px]">bolt</span> ACTION</button></div></div>
+</div>
+<!-- Transcript Segment 4 (Incoming) -->
+<div class="flex gap-3 group opacity-70">
+<div class="w-12 shrink-0 text-right">
+<span class="font-citation text-citation text-on-surface-variant">42:05</span>
+</div>
+<div class="flex-1 border-l-2 border-transparent pl-3 pb-2">
+<div class="flex items-baseline gap-2 mb-1">
+<span class="font-body-md text-body-md font-bold text-on-surface">Marcus T. • Legal</span>
+</div>
+<p class="font-transcript-mono text-transcript-mono text-on-surface-variant">
+                            That... actually might work. I'll need to run the staged approach by the compliance officer tomorrow. Let me take that as an action item.
+                            <span class="inline-block w-1.5 h-3.5 bg-primary ml-1 animate-pulse align-middle"></span>
+</p>
+<div class="mt-2 flex gap-3 opacity-0 group-hover:opacity-100 transition-opacity"><button class="text-on-surface-variant hover:text-primary flex items-center gap-1 font-label-caps text-[10px]"><span class="material-symbols-outlined text-[14px]">flag</span> FLAG</button><button class="text-on-surface-variant hover:text-primary flex items-center gap-1 font-label-caps text-[10px]"><span class="material-symbols-outlined text-[14px]">help</span> CLARIFY</button><button class="text-on-surface-variant hover:text-primary flex items-center gap-1 font-label-caps text-[10px]"><span class="material-symbols-outlined text-[14px]">bolt</span> ACTION</button></div></div>
+</div>
+</div>
+</section>
+<!-- Right/Secondary Column: Coach Insights (Desktop Side, Mobile Bottom Floating) -->
+<section class="hidden md:flex w-full md:w-1/2 lg:w-2/5 xl:w-1/3 h-full flex-col bg-surface-container border-l border-outline-variant p-container-padding space-y-stack-md">
+<div class="flex items-center justify-between mb-4">
+<h2 class="font-headline-sm text-headline-sm text-on-surface flex items-center gap-2">
+<span class="material-symbols-outlined text-primary">psychology</span>
+                    Otto Coach
+                </h2>
+<div class="flex items-center gap-2 text-on-surface-variant font-label-caps text-label-caps">
+<span class="w-2 h-2 rounded-full bg-coach-green animate-pulse"></span>
+                    PROCESSING
+                </div>
+</div>
+<!-- Insight Card 1 -->
+<div class="bg-surface-container-high rounded-xl p-4 border border-outline-variant shadow-sm relative overflow-hidden group hover:border-primary/50 transition-colors">
+<div class="absolute top-0 left-0 w-1 h-full bg-primary"></div>
+<div class="flex justify-between items-start mb-2">
+<span class="font-label-caps text-label-caps text-primary bg-primary/10 px-2 py-0.5 rounded">ANTICIPATION</span>
+<button class="text-on-surface-variant hover:text-on-surface" title="View Source">
+<span class="material-symbols-outlined text-sm">my_location</span>
+</button>
+</div>
+<h3 class="font-body-lg text-body-lg text-on-surface font-medium mb-2">Prepare for Legal Pushback</h3>
+<p class="font-body-md text-body-md text-on-surface-variant">
+                    Marcus mentioned Legal wants compliance upfront. Be ready to quantify the exact drop-off cost of the current flow to strengthen the staged-KYC argument.
+                </p>
+<div class="mt-3 flex items-center gap-2 font-citation text-citation text-on-surface-variant">
+<span class="material-symbols-outlined text-[14px]">history</span>
+                    Based on [40:45]
+                </div>
+</div>
+<!-- Insight Card 2 -->
+<div class="bg-surface-container-high rounded-xl p-4 border border-outline-variant shadow-sm relative overflow-hidden group hover:border-primary/50 transition-colors">
+<div class="absolute top-0 left-0 w-1 h-full bg-secondary-container"></div>
+<div class="flex justify-between items-start mb-2">
+<span class="font-label-caps text-label-caps text-secondary bg-secondary/10 px-2 py-0.5 rounded">ACTION DETECTED</span>
+</div>
+<h3 class="font-body-lg text-body-lg text-on-surface font-medium mb-2">Marcus: Propose Staged KYC</h3>
+<div class="flex gap-2 mt-3">
+<button class="flex-1 bg-surface-container-highest hover:bg-surface-bright text-on-surface font-label-caps text-label-caps py-2 rounded border border-outline-variant transition-colors flex items-center justify-center gap-1">
+<span class="material-symbols-outlined text-[16px]">check</span>
+                        CONFIRM
+                    </button>
+<button class="flex-1 bg-transparent hover:bg-surface-container-highest text-on-surface-variant font-label-caps text-label-caps py-2 rounded border border-outline-variant transition-colors">
+                        IGNORE
+                    </button>
+</div>
+</div>
+<!-- spacer to push controls to bottom on desktop -->
+<div class="flex-1"></div>
+</section>
+<!-- Mobile Floating Coach Layer & Global Controls -->
+<!-- This sits at the bottom of the screen, fixed on mobile, integrated on desktop -->
+<div class="absolute bottom-0 left-0 w-full md:hidden glass-panel z-30 pb-safe">
+<!-- Swipe indicator -->
+<div class="w-full flex justify-center py-2">
+<div class="w-12 h-1 bg-surface-container-highest rounded-full"></div>
+</div>
+<div class="px-gutter pb-4">
+<!-- Collapsed Insight Card for Mobile -->
+<div class="bg-surface-container-high rounded-lg p-4 border border-primary/50 mb-4 shadow-lg"><div class="flex items-center gap-2 mb-2"><span class="material-symbols-outlined text-primary text-[18px]">psychology</span><span class="font-label-caps text-label-caps text-primary">AGENT CLARIFICATION</span></div><p class="font-body-md text-body-md text-on-surface mb-3">QUESTION: Did Marcus mean the staging approach applies to all regions or just EU?</p><div class="flex gap-2"><button class="flex-1 bg-primary/10 hover:bg-primary/20 text-primary border border-primary/30 py-2 rounded font-label-caps text-[10px] transition-colors">ALL REGIONS</button><button class="flex-1 bg-primary/10 hover:bg-primary/20 text-primary border border-primary/30 py-2 rounded font-label-caps text-[10px] transition-colors">JUST EU</button></div></div>
+<!-- Primary Action -->
+<button class="w-full bg-primary hover:bg-primary-fixed-dim text-on-primary font-body-lg text-body-lg font-medium py-3 rounded-lg flex items-center justify-center gap-2 transition-colors shadow-sm">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">stop</span>
+                    Stop &amp; Sync to Vault
+                </button>
+</div>
+</div>
+<!-- Desktop Controls (Hidden on Mobile) -->
+<div class="hidden md:flex absolute bottom-0 right-0 w-1/3 bg-surface-container border-t border-outline-variant p-4 z-20">
+<button class="w-full bg-primary hover:bg-primary-fixed-dim text-on-primary font-body-lg text-body-lg font-medium py-3 rounded-lg flex items-center justify-center gap-2 transition-colors shadow-sm">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">stop</span>
+                Stop &amp; Sync to Vault
+            </button>
+</div>
+</main>
+<script>
+        // Simple auto-scroll logic for demo purposes
+        const feed = document.getElementById('transcriptFeed');
+        const scrollBtn = document.getElementById('autoScrollBtn');
+        let isAutoScrolling = true;
+
+        feed.addEventListener('scroll', () => {
+            // Check if user scrolled up
+            const isAtBottom = feed.scrollHeight - feed.scrollTop <= feed.clientHeight + 50;
+            if (!isAtBottom && isAutoScrolling) {
+                isAutoScrolling = false;
+                scrollBtn.classList.add('text-primary');
+                scrollBtn.classList.remove('text-on-surface-variant');
+            } else if (isAtBottom && !isAutoScrolling) {
+                isAutoScrolling = true;
+                scrollBtn.classList.remove('text-primary');
+                scrollBtn.classList.add('text-on-surface-variant');
+            }
+        });
+
+        scrollBtn.addEventListener('click', () => {
+            isAutoScrolling = true;
+            feed.scrollTop = feed.scrollHeight;
+            scrollBtn.classList.remove('text-primary');
+            scrollBtn.classList.add('text-on-surface-variant');
+        });
+        
+        // Ensure starting at bottom
+        feed.scrollTop = feed.scrollHeight;
+    </script>
+</body></html>
