@@ -48,6 +48,7 @@ pub mod openai;
 pub mod anthropic;
 pub mod groq;
 pub mod openrouter;
+pub mod otto;
 pub mod parakeet_engine;
 pub mod state;
 pub mod summary;
@@ -530,6 +531,7 @@ pub fn run() {
             get_transcription_status,
             read_audio_file,
             save_transcript,
+            otto::vault_writer::otto_export_meeting_to_vault,
             analytics::commands::init_analytics,
             analytics::commands::disable_analytics,
             analytics::commands::track_event,
