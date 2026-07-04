@@ -94,8 +94,8 @@
 .markBadge.flag { color: var(--mint); background: color-mix(in srgb, var(--mint) 15%, transparent); }
 .markBadge.action { color: var(--error); background: color-mix(in srgb, var(--error) 15%, transparent); }
 
-/* per-bubble actions (reveal on hover, stay if active) */
-.turnActions { flex: none; display: flex; gap: 6px; align-items: flex-start; opacity: 0; transition: opacity .12s; padding-top: 2px; }
+/* per-bubble actions — vertically stacked on the side (reveal on hover, stay if active) */
+.turnActions { flex: none; display: flex; flex-direction: column; gap: 6px; align-items: center; opacity: 0; transition: opacity .12s; padding-top: 2px; align-self: flex-start; }
 .turn:hover .turnActions { opacity: 1; }
 .bAct.active { opacity: 1 !important; background: var(--primary-container); border-color: var(--primary-container); color: var(--on-primary-container); }
 .bAct.clarify.active { background: #7fb2ff; border-color: #7fb2ff; color: #0d1420; }
@@ -139,6 +139,18 @@
 .antCard.risk .antTitle { color: var(--error); }
 .antBody { font-size: 13px; line-height: 1.45; color: var(--on-surface-variant); }
 
-.clarCard { background: var(--container); border: 1px solid var(--outline-variant); border-radius: 10px; padding: 12px 14px; margin-bottom: 8px; display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
+.clarCard { background: var(--container); border: 1px solid var(--outline-variant); border-radius: 10px; padding: 12px 14px; margin-bottom: 8px; display: flex; flex-direction: column; gap: 10px; }
 .clarText { font-size: 14px; line-height: 1.4; color: var(--on-surface); }
-.clarAsk { flex: none; font-size: 12px; color: var(--primary); background: none; border: none; cursor: pointer; }
+.clarFoot { display: flex; align-items: center; gap: 14px; }
+.clarAnswer { font-size: 12px; font-weight: 600; color: var(--on-primary-container); background: var(--primary-container); border: none; border-radius: 6px; padding: 5px 12px; cursor: pointer; }
+.clarAnswer:hover { filter: brightness(1.08); }
+.clarPark { font-size: 12px; color: var(--primary); background: none; border: none; cursor: pointer; }
+.clarIgnore { font-size: 12px; color: var(--tertiary); background: none; border: none; cursor: pointer; margin-left: auto; }
+.clarIgnore:hover { color: var(--on-surface-variant); }
+.answerBox { display: flex; flex-direction: column; gap: 8px; }
+.answerInput { width: 100%; min-height: 60px; resize: vertical; background: var(--container-low); border: 1px solid var(--outline-variant); border-radius: 8px; padding: 9px 11px; color: var(--on-surface); font-family: var(--font-body); font-size: 13px; }
+.answerInput:focus { outline: none; border-color: var(--primary); }
+.answerActions { display: flex; align-items: center; justify-content: flex-end; gap: 10px; }
+.answerCancel { font-size: 12px; color: var(--tertiary); background: none; border: none; cursor: pointer; }
+.answerSend { font-size: 12px; font-weight: 600; color: var(--on-primary-container); background: var(--primary-container); border: none; border-radius: 6px; padding: 6px 14px; cursor: pointer; }
+.answerSend:hover { filter: brightness(1.08); }

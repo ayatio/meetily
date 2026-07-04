@@ -43,6 +43,8 @@ export default function OttoLiveView() {
   // Per-bubble markers, keyed by bubble id -> set of active marker types (toggle).
   const [marks, setMarks] = useState<Record<string, string[]>>({});
   const [selected, setSelected] = useState<string | null>(null);
+  const [answering, setAnswering] = useState<string | null>(null);
+  const [answerText, setAnswerText] = useState('');
   const transcriptsRef = useRef<any[]>(transcripts);
   transcriptsRef.current = transcripts;
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -280,18 +282,65 @@ export default function OttoLiveView() {
 
                 <div className={`${styles.secLabel} ${styles.clar}`}>💬 SUGGESTED CLARIFICATIONS</div>
                 {clars.length > 0 ? (
-                  clars.map((c, i) => (
-                    <div key={i} className={styles.clarCard}>
-                      <span className={styles.clarText}>{c}</span>
-                      <button
-                        className={styles.clarAsk}
-                        title="Park to Queue — bewaar deze vraag voor de vault"
-                        onClick={() => { setParked((p) => new Set(p).add(c)); addMarker('clarify', 'Vraag geparkeerd', undefined); }}
-                      >
-                        Park
-                      </button>
-                    </div>
-                  ))
+                  clars.map((c) => {
+                    const isAns = answering === c;
+                    return (
+                      <div key={c} className={styles.clarCard}>
+                        <div className={styles.clarText}>{c}</div>
+                        {isAns ? (
+                          <div className={styles.answerBox}>
+                            <textarea
+                              className={styles.answerInput}
+                              value={answerText}
+                              autoFocus
+                              placeholder="Typ je antwoord…"
+                              onChange={(e) => setAnswerText(e.target.value)}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
+                                  const ans = answerText.trim();
+                                  addMarker('clarify', 'Antwoord opgeslagen');
+                                  invoke('otto_add_marker', {
+                                    meetingId: meetingTitle || 'live-session',
+                                    markerType: 'clarify',
+                                    audioTsMs: Math.floor(elapsed * 1000),
+                                    payload: JSON.stringify({ question: c, answer: ans, status: 'answered' }),
+                                  }).catch(() => {});
+                                  setParked((p) => new Set(p).add(c));
+                                  setAnswering(null); setAnswerText('');
+                                }
+                              }}
+                            />
+                            <div className={styles.answerActions}>
+                              <button className={styles.answerCancel} onClick={() => { setAnswering(null); setAnswerText(''); }}>Annuleer</button>
+                              <button
+                                className={styles.answerSend}
+                                onClick={() => {
+                                  const ans = answerText.trim();
+                                  invoke('otto_add_marker', {
+                                    meetingId: meetingTitle || 'live-session',
+                                    markerType: 'clarify',
+                                    audioTsMs: Math.floor(elapsed * 1000),
+                                    payload: JSON.stringify({ question: c, answer: ans, status: 'answered' }),
+                                  }).catch(() => {});
+                                  setFlash('Antwoord opgeslagen'); window.setTimeout(() => setFlash((f) => (f === 'Antwoord opgeslagen' ? null : f)), 1400);
+                                  setParked((p) => new Set(p).add(c));
+                                  setAnswering(null); setAnswerText('');
+                                }}
+                              >
+                                Verstuur
+                              </button>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className={styles.clarFoot}>
+                            <button className={styles.clarAnswer} onClick={() => { setAnswering(c); setAnswerText(''); }}>Beantwoord</button>
+                            <button className={styles.clarPark} title="Bewaar voor de vault" onClick={() => { setParked((p) => new Set(p).add(c)); addMarker('clarify', 'Vraag geparkeerd'); }}>Park</button>
+                            <button className={styles.clarIgnore} title="Negeer" onClick={() => setParked((p) => new Set(p).add(c))}>Negeer</button>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })
                 ) : (
                   <div className={styles.emptyLine}>Nog geen vragen.</div>
                 )}
