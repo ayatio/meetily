@@ -14,6 +14,15 @@ import OttoVaultDetail, { OttoTranscriptLine, OttoSummarySection } from './OttoV
 interface SummarySectionLike { title?: string; blocks?: { content?: string }[] }
 type SummaryLike = Record<string, SummarySectionLike> | null | undefined;
 
+function mapTopics(summary: SummaryLike): string[] {
+  if (!summary) return [];
+  const topics = Object.entries(summary)
+    .filter(([, v]) => v && typeof v === 'object' && Array.isArray((v as SummarySectionLike).blocks))
+    .map(([key, v]) => ((v as SummarySectionLike).title || key).trim())
+    .filter((t) => t.length > 0 && t.length <= 22);
+  return Array.from(new Set(topics)).slice(0, 6);
+}
+
 function mapSummary(summary: SummaryLike): OttoSummarySection[] {
   if (!summary) return [];
   return Object.entries(summary)
@@ -101,6 +110,7 @@ export default function OttoVaultDetailConnected({
       title={meeting.title || 'Meeting'}
       dateLabel={dateLabel}
       participants={participants}
+      topics={mapTopics(summary)}
       summary={mapSummary(summary)}
       transcript={lines}
       exporting={exporting}
