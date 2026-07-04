@@ -150,9 +150,16 @@ fn render_transcript(transcripts: &[MeetingTranscript]) -> String {
         if text.is_empty() {
             continue;
         }
+        // Otto (wie): friendly speaker label from the mic/system attribution.
+        let who: String = match t.speaker.as_deref() {
+            Some("mic") => "Jij: ".to_string(),
+            Some("system") => "Anderen: ".to_string(),
+            Some(other) if !other.is_empty() => format!("{}: ", other),
+            _ => String::new(),
+        };
         match t.audio_start_time {
-            Some(start) => out.push_str(&format!("{} {}\n", format_offset(start), text)),
-            None => out.push_str(&format!("{}\n", text)),
+            Some(start) => out.push_str(&format!("{} {}{}\n", format_offset(start), who, text)),
+            None => out.push_str(&format!("{}{}\n", who, text)),
         }
     }
     if out.trim().is_empty() {
