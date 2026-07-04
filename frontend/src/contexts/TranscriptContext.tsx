@@ -284,6 +284,12 @@ export function TranscriptProvider({ children }: { children: ReactNode }) {
 
     const setupListener = async () => {
       try {
+        // In the browser / PWA (no Tauri) there are no native transcript events;
+        // skip listener setup silently instead of erroring.
+        if (typeof window !== 'undefined' && !(window as any).__TAURI__ && !(window as any).__TAURI_INTERNALS__) {
+          console.log('Not running in Tauri — skipping transcript listener (PWA/browser mode).');
+          return;
+        }
         console.log('🔥 Setting up MAIN transcript listener during component initialization...');
         unlistenFn = await transcriptService.onTranscriptUpdate((update) => {
           const now = Date.now();
@@ -338,8 +344,7 @@ export function TranscriptProvider({ children }: { children: ReactNode }) {
         });
         console.log('✅ MAIN transcript listener setup complete');
       } catch (error) {
-        console.error('❌ Failed to setup MAIN transcript listener:', error);
-        alert('Failed to setup transcript listener. Check console for details.');
+        console.warn('Failed to setup MAIN transcript listener (non-fatal):', error);
       }
     };
 
