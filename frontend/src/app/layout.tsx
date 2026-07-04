@@ -1,6 +1,7 @@
 'use client'
 
 import './globals.css'
+import { usePathname } from 'next/navigation'
 import { Source_Sans_3 } from 'next/font/google'
 import Sidebar from '@/components/Sidebar'
 import { SidebarProvider } from '@/components/Sidebar/SidebarProvider'
@@ -68,6 +69,8 @@ export default function RootLayout({
 }: {
   children: React.ReactNode
 }) {
+  const pathname = usePathname()
+  const isCoachRoute = pathname?.startsWith('/coach') ?? false
   const [showOnboarding, setShowOnboarding] = useState(false)
   const [onboardingCompleted, setOnboardingCompleted] = useState(false)
 
@@ -247,8 +250,13 @@ export default function RootLayout({
                               {/* Download progress toast provider - listens for background downloads */}
                               <DownloadProgressToastProvider />
 
-                              {/* Show onboarding or main app */}
-                              {showOnboarding ? (
+                              {/* Show onboarding or main app.
+                                  The /coach PWA client is full-screen and must
+                                  never be gated by onboarding (it runs on a phone
+                                  without the Tauri desktop shell). */}
+                              {isCoachRoute ? (
+                                <>{children}</>
+                              ) : showOnboarding ? (
                                 <OnboardingFlow onComplete={handleOnboardingComplete} />
                               ) : (
                                 <div className="flex">
