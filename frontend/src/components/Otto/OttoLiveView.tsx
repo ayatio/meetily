@@ -38,7 +38,8 @@ export default function OttoLiveView() {
   const [thinking, setThinking] = useState(false);
   const [flash, setFlash] = useState<string | null>(null);
   const [focus, setFocus] = useState(false);
-  const [parked, setParked] = useState<Set<string>>(new Set());
+  // Clarifications accumulate across passes; handled ones stay as faded history.
+  const [clarHistory, setClarHistory] = useState<{ text: string; status: 'open' | 'answered' | 'parked' | 'ignored'; answer?: string }[]>([]);
   const [stopping, setStopping] = useState(false);
   // Per-bubble markers, keyed by bubble id -> set of active marker types (toggle).
   const [marks, setMarks] = useState<Record<string, string[]>>({});
@@ -66,7 +67,16 @@ export default function OttoLiveView() {
     setThinking(true);
     try {
       const r = await invoke<CoachResult>('otto_coach_pass', { transcript: lines.join('\n') });
-      if (r) setCoach(r);
+      if (r) {
+        setCoach(r);
+        if (r.clarifications?.length) {
+          setClarHistory((prev) => {
+            const seen = new Set(prev.map((x) => x.text));
+            const add = r.clarifications.filter((c) => c && !seen.has(c)).map((c) => ({ text: c, status: 'open' as const }));
+            return add.length ? [...prev, ...add] : prev;
+          });
+        }
+      }
     } catch (e) { console.warn('otto_coach_pass failed:', e); }
     finally { setThinking(false); }
   }, []);
@@ -131,7 +141,20 @@ export default function OttoLiveView() {
   if (!isRecording) return null;
 
   const turns = (transcripts || []).filter((t: any) => (t.text || '').trim());
-  const clars = (coach?.clarifications || []).filter((c) => !parked.has(c));
+  const openClars = clarHistory.filter((c) => c.status === 'open');
+  const doneClars = clarHistory.filter((c) => c.status !== 'open');
+
+  const setClarStatus = (text: string, status: 'answered' | 'parked' | 'ignored', answer?: string) => {
+    setClarHistory((prev) => prev.map((c) => (c.text === text ? { ...c, status, answer } : c)));
+    if (status !== 'ignored') {
+      invoke('otto_add_marker', {
+        meetingId: meetingTitle || 'live-session',
+        markerType: 'clarify',
+        audioTsMs: Math.floor(elapsed * 1000),
+        payload: JSON.stringify({ question: text, answer: answer || null, status }),
+      }).catch(() => {});
+    }
+  };
 
   return (
     <div className={`${styles.scope} ${inter.variable} ${mono.variable}`}>
@@ -261,7 +284,7 @@ export default function OttoLiveView() {
 
             {focus ? (
               <div className={styles.focusNote}>
-                🌙 Focus Mode — Otto verzamelt {clars.length} vraag(en) op de achtergrond.
+                🌙 Focus Mode — Otto verzamelt {openClars.length} vraag(en) op de achtergrond.
               </div>
             ) : (
               <>
@@ -281,69 +304,69 @@ export default function OttoLiveView() {
                 )}
 
                 <div className={`${styles.secLabel} ${styles.clar}`}>💬 SUGGESTED CLARIFICATIONS</div>
-                {clars.length > 0 ? (
-                  clars.map((c) => {
-                    const isAns = answering === c;
-                    return (
-                      <div key={c} className={styles.clarCard}>
-                        <div className={styles.clarText}>{c}</div>
-                        {isAns ? (
-                          <div className={styles.answerBox}>
-                            <textarea
-                              className={styles.answerInput}
-                              value={answerText}
-                              autoFocus
-                              placeholder="Typ je antwoord…"
-                              onChange={(e) => setAnswerText(e.target.value)}
-                              onKeyDown={(e) => {
-                                if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
-                                  const ans = answerText.trim();
-                                  addMarker('clarify', 'Antwoord opgeslagen');
-                                  invoke('otto_add_marker', {
-                                    meetingId: meetingTitle || 'live-session',
-                                    markerType: 'clarify',
-                                    audioTsMs: Math.floor(elapsed * 1000),
-                                    payload: JSON.stringify({ question: c, answer: ans, status: 'answered' }),
-                                  }).catch(() => {});
-                                  setParked((p) => new Set(p).add(c));
-                                  setAnswering(null); setAnswerText('');
-                                }
-                              }}
-                            />
-                            <div className={styles.answerActions}>
-                              <button className={styles.answerCancel} onClick={() => { setAnswering(null); setAnswerText(''); }}>Annuleer</button>
-                              <button
-                                className={styles.answerSend}
-                                onClick={() => {
-                                  const ans = answerText.trim();
-                                  invoke('otto_add_marker', {
-                                    meetingId: meetingTitle || 'live-session',
-                                    markerType: 'clarify',
-                                    audioTsMs: Math.floor(elapsed * 1000),
-                                    payload: JSON.stringify({ question: c, answer: ans, status: 'answered' }),
-                                  }).catch(() => {});
-                                  setFlash('Antwoord opgeslagen'); window.setTimeout(() => setFlash((f) => (f === 'Antwoord opgeslagen' ? null : f)), 1400);
-                                  setParked((p) => new Set(p).add(c));
-                                  setAnswering(null); setAnswerText('');
-                                }}
-                              >
-                                Verstuur
-                              </button>
-                            </div>
-                          </div>
-                        ) : (
-                          <div className={styles.clarFoot}>
-                            <button className={styles.clarAnswer} onClick={() => { setAnswering(c); setAnswerText(''); }}>Beantwoord</button>
-                            <button className={styles.clarPark} title="Bewaar voor de vault" onClick={() => { setParked((p) => new Set(p).add(c)); addMarker('clarify', 'Vraag geparkeerd'); }}>Park</button>
-                            <button className={styles.clarIgnore} title="Negeer" onClick={() => setParked((p) => new Set(p).add(c))}>Negeer</button>
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })
-                ) : (
+                {openClars.length === 0 && doneClars.length === 0 && (
                   <div className={styles.emptyLine}>Nog geen vragen.</div>
                 )}
+                {openClars.map((c) => {
+                  const isAns = answering === c.text;
+                  return (
+                    <div key={c.text} className={styles.clarCard}>
+                      <div className={styles.clarText}>{c.text}</div>
+                      {isAns ? (
+                        <div className={styles.answerBox}>
+                          <textarea
+                            className={styles.answerInput}
+                            value={answerText}
+                            autoFocus
+                            placeholder="Typ je antwoord…"
+                            onChange={(e) => setAnswerText(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
+                                setClarStatus(c.text, 'answered', answerText.trim());
+                                setFlash('Antwoord opgeslagen'); window.setTimeout(() => setFlash((f) => (f === 'Antwoord opgeslagen' ? null : f)), 1400);
+                                setAnswering(null); setAnswerText('');
+                              }
+                            }}
+                          />
+                          <div className={styles.answerActions}>
+                            <button className={styles.answerCancel} onClick={() => { setAnswering(null); setAnswerText(''); }}>Annuleer</button>
+                            <button
+                              className={styles.answerSend}
+                              onClick={() => {
+                                setClarStatus(c.text, 'answered', answerText.trim());
+                                setFlash('Antwoord opgeslagen'); window.setTimeout(() => setFlash((f) => (f === 'Antwoord opgeslagen' ? null : f)), 1400);
+                                setAnswering(null); setAnswerText('');
+                              }}
+                            >
+                              Verstuur
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className={styles.clarFoot}>
+                          <button className={styles.clarAnswer} onClick={() => { setAnswering(c.text); setAnswerText(''); }}>Beantwoord</button>
+                          <button className={styles.clarPark} title="Bewaar voor de vault" onClick={() => setClarStatus(c.text, 'parked')}>Park</button>
+                          <button className={styles.clarIgnore} title="Negeer" onClick={() => setClarStatus(c.text, 'ignored')}>Negeer</button>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+
+                {doneClars.length > 0 && (
+                  <div className={styles.histLabel}>AFGEHANDELD</div>
+                )}
+                {doneClars.map((c) => (
+                  <div key={c.text} className={styles.clarDone}>
+                    <div className={styles.clarDoneHead}>
+                      <span className={`${styles.doneBadge} ${styles['s_' + c.status]}`}>
+                        {c.status === 'answered' ? '✓ beantwoord' : c.status === 'parked' ? '⌗ geparkeerd' : '✕ genegeerd'}
+                      </span>
+                    </div>
+                    <div className={styles.clarDoneText}>{c.text}</div>
+                    {c.answer && <div className={styles.clarAnswerText}>↳ {c.answer}</div>}
+                  </div>
+                ))}
               </>
             )}
           </aside>
