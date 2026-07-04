@@ -73,6 +73,14 @@
   border: 1px solid var(--outline-variant); background: var(--container-low);
   padding: 6px 12px; border-radius: 6px; white-space: nowrap;
 }
+.projectPick { display: inline-flex; align-items: center; gap: 8px; }
+.projectLabel { font-family: var(--font-mono); font-size: 11px; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; color: var(--primary); }
+.projectSelect {
+  font-family: var(--font-body); font-size: 13px; color: var(--on-surface);
+  background: var(--container-low); border: 1px solid var(--primary-container);
+  border-radius: 6px; padding: 6px 10px; cursor: pointer; min-width: 150px;
+}
+.projectSelect:focus { outline: 2px solid var(--primary); outline-offset: 1px; }
 .statusPill .ok { color: var(--mint); }
 .search {
   flex: 1; max-width: 420px; margin-left: auto;

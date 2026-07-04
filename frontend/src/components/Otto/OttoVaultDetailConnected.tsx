@@ -68,6 +68,31 @@ export default function OttoVaultDetailConnected({
   const [exporting, setExporting] = useState(false);
   const [status, setStatus] = useState<{ kind: 'ok' | 'err'; text: string } | null>(null);
   const [audioSrc, setAudioSrc] = useState<string | undefined>(undefined);
+  const [projects, setProjects] = useState<string[]>([]);
+  const [project, setProject] = useState<string>('');
+
+  useEffect(() => {
+    let cancelled = false;
+    Promise.all([
+      invoke<string[]>('otto_list_projects').catch(() => [] as string[]),
+      invoke<string>('otto_get_meeting_project', { meetingId: meeting.id }).catch(() => ''),
+    ]).then(([list, current]) => {
+      if (cancelled) return;
+      setProjects(list);
+      setProject(current);
+    });
+    return () => { cancelled = true; };
+  }, [meeting.id]);
+
+  const selectProject = useCallback(async (p: string) => {
+    setProject(p);
+    try {
+      await invoke('otto_set_meeting_project', { meetingId: meeting.id, project: p });
+      setStatus({ kind: 'ok', text: p ? `Project: ${p}` : 'Project gewist' });
+    } catch (e) {
+      setStatus({ kind: 'err', text: `Project opslaan mislukt: ${e}` });
+    }
+  }, [meeting.id]);
 
   useEffect(() => {
     let cancelled = false;
@@ -141,6 +166,9 @@ export default function OttoVaultDetailConnected({
       dateLabel={dateLabel}
       participants={participants}
       topics={mapTopics(summary)}
+      projects={projects}
+      project={project}
+      onSelectProject={selectProject}
       audioSrc={audioSrc}
       summary={mapSummary(summary)}
       transcript={lines}

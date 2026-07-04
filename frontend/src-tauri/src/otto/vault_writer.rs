@@ -176,6 +176,7 @@ pub fn build_note_markdown(
     meeting: &MeetingDetails,
     summary: Option<&Value>,
     participants: &[String],
+    project: &str,
     exported_at: &str,
 ) -> String {
     let date = meeting.created_at.split('T').next().unwrap_or(&meeting.created_at);
@@ -186,6 +187,11 @@ pub fn build_note_markdown(
     };
     let transcript_md = render_transcript(&meeting.transcripts);
     let participants_yaml = render_participants_yaml(participants);
+    let project_yaml = if project.trim().is_empty() {
+        "\"\"".to_string()
+    } else {
+        format!("\"{}\"", project.replace('"', "'"))
+    };
 
     // YAML frontmatter. Title is quoted to survive colons/special chars.
     let safe_title = meeting.title.replace('"', "'");
@@ -195,6 +201,7 @@ title: \"{title}\"\n\
 date: {date}\n\
 source: otto-scribe\n\
 type: meeting-transcript\n\
+project: {project_yaml}\n\
 meeting_id: {id}\n\
 participants: {participants}\n\
 tags: [otto-scribe, meeting, inbox]\n\
@@ -213,6 +220,7 @@ exported: {exported}\n\
         title = safe_title,
         date = date,
         id = meeting.id,
+        project_yaml = project_yaml,
         participants = participants_yaml,
         exported = exported_at,
         summary = summary_md,
@@ -286,15 +294,26 @@ pub async fn otto_export_meeting_to_vault(
     };
 
     let participants = super::participants::load_participants(pool, &meeting_id).await;
+    let project = super::projects::load_meeting_project(pool, &meeting_id)
+        .await
+        .unwrap_or_default();
 
     let exported_at = chrono::Utc::now().to_rfc3339();
-    let content = build_note_markdown(&meeting, summary_value.as_ref(), &participants, &exported_at);
+    let content = build_note_markdown(&meeting, summary_value.as_ref(), &participants, &project, &exported_at);
 
     let date = meeting.created_at.split('T').next().unwrap_or("undated");
     let base_name = format!("{}-{}", date, slugify(&meeting.title));
 
-    let inbox = vault_inbox_dir()?;
-    let path = write_unique(&inbox, &base_name, &content)?;
+    // Route into the designated project (Projects/<Project>/Meetings) when set,
+    // otherwise the global Inbox/.
+    let out_dir = if project.trim().is_empty() {
+        vault_inbox_dir()?
+    } else {
+        super::projects::vault_projects_dir()?
+            .join(&project)
+            .join("Meetings")
+    };
+    let path = write_unique(&out_dir, &base_name, &content)?;
 
     info!("otto: wrote vault note {}", path.display());
     Ok(path.to_string_lossy().to_string())
@@ -351,11 +370,13 @@ mod tests {
             &m,
             Some(&summary),
             &["Ayat".to_string(), "Caroline".to_string()],
+            "Talebloom",
             "2026-07-04T10:05:00+00:00",
         );
 
         assert!(md.starts_with("---\n"));
         assert!(md.contains("title: \"Team Standup: Q3\""));
+        assert!(md.contains("project: \"Talebloom\""));
         assert!(md.contains("date: 2026-07-04"));
         assert!(md.contains("meeting_id: abc123"));
         assert!(md.contains("participants: [\"Ayat\", \"Caroline\"]"));
@@ -363,14 +384,14 @@ mod tests {
         assert!(md.contains("Korte sync over de roadmap."));
         assert!(md.contains("- Ayat stuurt de planning"));
         assert!(md.contains("## Raw transcript"));
-        assert!(md.contains("[00:01] Goedemorgen allemaal."));
-        assert!(md.contains("[01:05] Let's discuss the roadmap."));
+        assert!(md.contains("[00:01] Jij: Goedemorgen allemaal."));
+        assert!(md.contains("[01:05] Anderen: Let's discuss the roadmap."));
     }
 
     #[test]
     fn note_without_summary_has_placeholder() {
         let m = sample_meeting();
-        let md = build_note_markdown(&m, None, &[], "2026-07-04T10:05:00+00:00");
+        let md = build_note_markdown(&m, None, &[], "", "2026-07-04T10:05:00+00:00");
         assert!(md.contains("_Nog geen samenvatting beschikbaar._"));
         assert!(md.contains("participants: []"));
     }
@@ -434,6 +455,7 @@ mod tests {
                 &meeting,
                 summary.as_ref(),
                 &participants,
+                "",
                 "2026-07-04T00:00:00+00:00",
             );
 

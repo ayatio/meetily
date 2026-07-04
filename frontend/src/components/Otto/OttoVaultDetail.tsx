@@ -47,6 +47,9 @@ export interface OttoVaultDetailProps {
   durationLabel?: string;
   participants: string[];
   topics?: string[];
+  projects?: string[];
+  project?: string;
+  onSelectProject?: (p: string) => void;
   vaultStatus?: string;
   audio?: { positionLabel: string; durationLabel: string; progress: number };
   audioSrc?: string;
@@ -66,6 +69,9 @@ export default function OttoVaultDetail({
   durationLabel,
   participants,
   topics = [],
+  projects = [],
+  project = '',
+  onSelectProject,
   vaultStatus = 'Sent to Inbox',
   audio,
   audioSrc,
@@ -137,6 +143,19 @@ export default function OttoVaultDetail({
 
       <main className={styles.main}>
         <header className={styles.topbar}>
+          <label className={styles.projectPick} title="Project (bepaalt waar de note en action-items heen gaan)">
+            <span className={styles.projectLabel}>Project</span>
+            <select
+              className={styles.projectSelect}
+              value={project}
+              onChange={(e) => onSelectProject?.(e.target.value)}
+            >
+              <option value="">— kies project —</option>
+              {projects.map((p) => (
+                <option key={p} value={p}>{p}</option>
+              ))}
+            </select>
+          </label>
           <span className={styles.statusPill}>
             <span className={styles.ok}>◉</span> Vault Status: {vaultStatus}
           </span>
