@@ -55,6 +55,13 @@
 .topRight { margin-left: auto; display: flex; align-items: center; gap: 14px; color: var(--on-surface-variant); font-size: 14px; }
 .stopBtn { display: inline-flex; align-items: center; gap: 8px; background: var(--primary-container); color: var(--on-primary-container); border: none; border-radius: 8px; padding: 8px 16px; font-size: 14px; font-weight: 600; cursor: pointer; }
 .stopBtn:hover { filter: brightness(1.08); }
+.focusToggle { display: inline-flex; align-items: center; gap: 8px; background: var(--container); border: 1px solid var(--outline-variant); color: var(--on-surface-variant); border-radius: 8px; padding: 7px 12px; font-size: 13px; cursor: pointer; }
+.focusToggle.on { border-color: var(--primary); color: var(--primary); }
+.switch { width: 30px; height: 17px; border-radius: 999px; background: var(--outline-variant); position: relative; transition: background .15s; }
+.switch.on { background: var(--primary-container); }
+.switch::after { content: ""; position: absolute; top: 2px; left: 2px; width: 13px; height: 13px; border-radius: 50%; background: #fff; transition: transform .15s; }
+.switch.on::after { transform: translateX(13px); }
+.focusNote { font-size: 13px; color: var(--tertiary); background: color-mix(in srgb, var(--primary-container) 12%, transparent); border: 1px solid var(--outline-variant); border-radius: 10px; padding: 14px; margin-top: 8px; }
 .avatar { width: 30px; height: 30px; border-radius: 50%; background: var(--surface-variant); }
 
 .body { flex: 1; display: flex; min-height: 0; }
@@ -74,6 +81,16 @@
 .tText { font-family: var(--font-mono); font-size: 14px; line-height: 1.65; color: var(--on-surface-variant); }
 .caret { display: inline-block; width: 8px; height: 15px; background: var(--on-surface); margin-left: 2px; vertical-align: -2px; animation: blink 1s step-end infinite; }
 @keyframes blink { 50% { opacity: 0; } }
+
+/* per-bubble actions (reveal on hover) */
+.turnActions { flex: none; display: flex; gap: 6px; align-items: flex-start; opacity: 0; transition: opacity .12s; padding-top: 2px; }
+.turn:hover .turnActions { opacity: 1; }
+.bAct { width: 30px; height: 30px; border-radius: 8px; border: 1px solid var(--outline-variant); background: var(--container); color: var(--tertiary); font-size: 13px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: transform .06s, border-color .12s, background .12s; }
+.bAct:active { transform: scale(.9); }
+.bAct.clarify:hover { color: #7fb2ff; border-color: #7fb2ff; }
+.bAct.bookmark:hover { color: var(--primary); border-color: var(--primary); }
+.bAct.flag:hover { color: var(--mint); border-color: var(--mint); }
+.bAct.action:hover { color: var(--error); border-color: var(--error); }
 
 .actions { flex: none; display: flex; align-items: center; justify-content: center; gap: 12px; padding: 14px; border-top: 1px solid var(--outline-variant); }
 .actBtn { display: inline-flex; align-items: center; gap: 8px; background: var(--container); border: 1px solid var(--outline-variant); color: var(--on-surface); border-radius: 10px; padding: 10px 18px; font-size: 14px; cursor: pointer; transition: border-color .15s, background .15s; }

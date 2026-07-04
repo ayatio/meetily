@@ -37,6 +37,8 @@ export default function OttoLiveView() {
   const [coach, setCoach] = useState<CoachResult | null>(null);
   const [thinking, setThinking] = useState(false);
   const [flash, setFlash] = useState<string | null>(null);
+  const [focus, setFocus] = useState(false);
+  const [parked, setParked] = useState<Set<string>>(new Set());
   const transcriptsRef = useRef<any[]>(transcripts);
   transcriptsRef.current = transcripts;
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -75,14 +77,16 @@ export default function OttoLiveView() {
     if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
   }, [transcripts]);
 
-  const addMarker = useCallback(async (type: string, label: string) => {
-    const last = (transcriptsRef.current || []).slice(-1)[0];
-    const payload = JSON.stringify({ line: last?.text || '', speaker: last?.speaker || null });
+  // Add a marker, optionally tied to a specific transcript bubble (segment).
+  const addMarker = useCallback(async (type: string, label: string, seg?: any) => {
+    const src = seg ?? (transcriptsRef.current || []).slice(-1)[0];
+    const tsMs = seg ? Math.floor((seg.audio_start_time || 0) * 1000) : Math.floor(elapsed * 1000);
+    const payload = JSON.stringify({ line: src?.text || '', speaker: src?.speaker || null, ts: src?.audio_start_time ?? null });
     try {
       await invoke('otto_add_marker', {
         meetingId: meetingTitle || 'live-session',
         markerType: type,
-        audioTsMs: Math.floor(elapsed * 1000),
+        audioTsMs: tsMs,
         payload,
       });
     } catch (e) { console.warn('marker failed:', e); }
@@ -90,9 +94,17 @@ export default function OttoLiveView() {
     window.setTimeout(() => setFlash(null), 1600);
   }, [meetingTitle, elapsed]);
 
+  const BUBBLE_ACTS: { type: string; icon: string; label: string; cls: string }[] = [
+    { type: 'clarify', icon: '❓', label: 'Verheldering gevraagd', cls: 'clarify' },
+    { type: 'bookmark', icon: '🔖', label: 'Bladwijzer gezet', cls: 'bookmark' },
+    { type: 'flag', icon: '⚑', label: 'Risico gemarkeerd', cls: 'flag' },
+    { type: 'action', icon: '⚡', label: 'Actie → OttoMap', cls: 'action' },
+  ];
+
   if (!isRecording) return null;
 
   const turns = (transcripts || []).filter((t: any) => (t.text || '').trim());
+  const clars = (coach?.clarifications || []).filter((c) => !parked.has(c));
 
   return (
     <div className={`${styles.scope} ${inter.variable} ${mono.variable}`}>
@@ -119,6 +131,14 @@ export default function OttoLiveView() {
           <span className={styles.sep} />
           <span className={styles.mTitle}>{meetingTitle || 'Live meeting'}</span>
           <div className={styles.topRight}>
+            <button
+              className={`${styles.focusToggle} ${focus ? styles.on : ''}`}
+              onClick={() => setFocus((f) => !f)}
+              title="Focus Mode — onderdrukt de coach-notificaties; vragen worden op de achtergrond verzameld"
+            >
+              <span className={`${styles.switch} ${focus ? styles.on : ''}`} />
+              Focus
+            </button>
             <button
               className={styles.stopBtn}
               onClick={() => window.dispatchEvent(new CustomEvent('otto-stop-recording'))}
@@ -148,6 +168,18 @@ export default function OttoLiveView() {
                       <div className={styles.tBody}>
                         <span className={styles.tWho}>{who(t.speaker)}{live && <span className={styles.tLiveDot} />}</span>
                         <div className={styles.tText}>{t.text}{live && <span className={styles.caret} />}</div>
+                      </div>
+                      <div className={styles.turnActions}>
+                        {BUBBLE_ACTS.map((a) => (
+                          <button
+                            key={a.type}
+                            className={`${styles.bAct} ${styles[a.cls]}`}
+                            title={a.label}
+                            onClick={() => addMarker(a.type, a.label, t)}
+                          >
+                            {a.icon}
+                          </button>
+                        ))}
                       </div>
                     </div>
                   );
@@ -184,30 +216,45 @@ export default function OttoLiveView() {
               {thinking && <div className={styles.synth}>↻ Otto denkt mee…</div>}
             </div>
 
-            <div className={styles.secLabel}>◍ COACH: ANTICIPATE</div>
-            {coach && coach.anticipate && coach.anticipate.length > 0 ? (
-              coach.anticipate.map((a, i) => (
-                <div key={i} className={`${styles.antCard} ${a.kind === 'risk' ? styles.risk : ''}`}>
-                  <span className={styles.antIcon}>{a.kind === 'risk' ? '⚠' : '⟳'}</span>
-                  <div>
-                    <div className={styles.antTitle}>{a.title}</div>
-                    <div className={styles.antBody}>{a.body}</div>
-                  </div>
-                </div>
-              ))
+            {focus ? (
+              <div className={styles.focusNote}>
+                🌙 Focus Mode — Otto verzamelt {clars.length} vraag(en) op de achtergrond.
+              </div>
             ) : (
-              <div className={styles.emptyLine}>Nog geen inzichten.</div>
-            )}
+              <>
+                <div className={styles.secLabel}>◍ COACH: ANTICIPATE</div>
+                {coach && coach.anticipate && coach.anticipate.length > 0 ? (
+                  coach.anticipate.map((a, i) => (
+                    <div key={i} className={`${styles.antCard} ${a.kind === 'risk' ? styles.risk : ''}`}>
+                      <span className={styles.antIcon}>{a.kind === 'risk' ? '⚠' : '⟳'}</span>
+                      <div>
+                        <div className={styles.antTitle}>{a.title}</div>
+                        <div className={styles.antBody}>{a.body}</div>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className={styles.emptyLine}>Nog geen inzichten.</div>
+                )}
 
-            <div className={`${styles.secLabel} ${styles.clar}`}>💬 SUGGESTED CLARIFICATIONS</div>
-            {coach && coach.clarifications && coach.clarifications.length > 0 ? (
-              coach.clarifications.map((c, i) => (
-                <div key={i} className={styles.clarCard}>
-                  <span className={styles.clarText}>{c}</span>
-                </div>
-              ))
-            ) : (
-              <div className={styles.emptyLine}>Nog geen vragen.</div>
+                <div className={`${styles.secLabel} ${styles.clar}`}>💬 SUGGESTED CLARIFICATIONS</div>
+                {clars.length > 0 ? (
+                  clars.map((c, i) => (
+                    <div key={i} className={styles.clarCard}>
+                      <span className={styles.clarText}>{c}</span>
+                      <button
+                        className={styles.clarAsk}
+                        title="Park to Queue — bewaar deze vraag voor de vault"
+                        onClick={() => { setParked((p) => new Set(p).add(c)); addMarker('clarify', 'Vraag geparkeerd', undefined); }}
+                      >
+                        Park
+                      </button>
+                    </div>
+                  ))
+                ) : (
+                  <div className={styles.emptyLine}>Nog geen vragen.</div>
+                )}
+              </>
             )}
           </aside>
         </div>
