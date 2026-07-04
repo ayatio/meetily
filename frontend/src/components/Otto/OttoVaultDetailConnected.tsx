@@ -47,6 +47,7 @@ interface MeetingLike {
   id: string;
   title?: string;
   created_at?: string;
+  folder_path?: string | null;
 }
 
 function fmt(seconds?: number | null): string {
@@ -66,6 +67,7 @@ export default function OttoVaultDetailConnected({
   const [participants, setParticipants] = useState<string[]>([]);
   const [exporting, setExporting] = useState(false);
   const [status, setStatus] = useState<{ kind: 'ok' | 'err'; text: string } | null>(null);
+  const [audioSrc, setAudioSrc] = useState<string | undefined>(undefined);
 
   useEffect(() => {
     let cancelled = false;
@@ -74,6 +76,27 @@ export default function OttoVaultDetailConnected({
       .catch(() => {});
     return () => { cancelled = true; };
   }, [meeting.id]);
+
+  // Load the meeting's saved audio (P2 — terugluisteren) as a blob URL.
+  useEffect(() => {
+    let cancelled = false;
+    let url: string | undefined;
+    const folder = meeting.folder_path;
+    if (!folder) { setAudioSrc(undefined); return; }
+    const filePath = `${folder}/audio.mp4`;
+    invoke<number[]>('read_audio_file', { filePath })
+      .then((bytes) => {
+        if (cancelled || !bytes || bytes.length === 0) return;
+        const blob = new Blob([new Uint8Array(bytes)], { type: 'audio/mp4' });
+        url = URL.createObjectURL(blob);
+        setAudioSrc(url);
+      })
+      .catch(() => { if (!cancelled) setAudioSrc(undefined); });
+    return () => {
+      cancelled = true;
+      if (url) URL.revokeObjectURL(url);
+    };
+  }, [meeting.folder_path]);
 
   const persist = useCallback(async (next: string[]) => {
     try {
@@ -111,6 +134,7 @@ export default function OttoVaultDetailConnected({
       dateLabel={dateLabel}
       participants={participants}
       topics={mapTopics(summary)}
+      audioSrc={audioSrc}
       summary={mapSummary(summary)}
       transcript={lines}
       exporting={exporting}

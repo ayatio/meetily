@@ -12,7 +12,7 @@
  * be wired to real data by the meeting-details page.
  */
 
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { GeistSans } from 'geist/font/sans';
 import { Inter, JetBrains_Mono } from 'next/font/google';
 import styles from './OttoVaultDetail.module.css';
@@ -49,6 +49,7 @@ export interface OttoVaultDetailProps {
   topics?: string[];
   vaultStatus?: string;
   audio?: { positionLabel: string; durationLabel: string; progress: number };
+  audioSrc?: string;
   summary?: OttoSummarySection[];
   actionItems?: OttoActionItem[];
   transcript: OttoTranscriptLine[];
@@ -67,6 +68,7 @@ export default function OttoVaultDetail({
   topics = [],
   vaultStatus = 'Sent to Inbox',
   audio,
+  audioSrc,
   summary = [],
   actionItems = [],
   transcript,
@@ -77,6 +79,39 @@ export default function OttoVaultDetail({
   onRemoveParticipant,
 }: OttoVaultDetailProps) {
   const [draft, setDraft] = useState('');
+
+  const audioRef = useRef<HTMLAudioElement>(null);
+  const [playing, setPlaying] = useState(false);
+  const [pos, setPos] = useState(0);
+  const [dur, setDur] = useState(0);
+
+  useEffect(() => {
+    setPlaying(false);
+    setPos(0);
+    setDur(0);
+  }, [audioSrc]);
+
+  const fmtTime = (s: number) => {
+    if (!isFinite(s) || s < 0) s = 0;
+    const t = Math.floor(s);
+    return `${String(Math.floor(t / 60)).padStart(2, '0')}:${String(t % 60).padStart(2, '0')}`;
+  };
+
+  const togglePlay = () => {
+    const el = audioRef.current;
+    if (!el) return;
+    if (el.paused) { el.play(); setPlaying(true); } else { el.pause(); setPlaying(false); }
+  };
+
+  const seek = (e: React.MouseEvent<HTMLDivElement>) => {
+    const el = audioRef.current;
+    if (!el || !dur) return;
+    const rect = e.currentTarget.getBoundingClientRect();
+    el.currentTime = ((e.clientX - rect.left) / rect.width) * dur;
+  };
+
+  const hasAudio = !!audioSrc || !!audio;
+  const progress = audioSrc ? (dur ? pos / dur : 0) : (audio?.progress ?? 0);
 
   const commitDraft = () => {
     const name = draft.trim();
@@ -157,16 +192,28 @@ export default function OttoVaultDetail({
               </div>
             </div>
 
-            {audio && (
+            {hasAudio && (
               <div className={styles.player}>
-                <button className={styles.play}>▶</button>
+                {audioSrc && (
+                  <audio
+                    ref={audioRef}
+                    src={audioSrc}
+                    onTimeUpdate={(e) => setPos(e.currentTarget.currentTime)}
+                    onLoadedMetadata={(e) => setDur(e.currentTarget.duration)}
+                    onEnded={() => setPlaying(false)}
+                    preload="metadata"
+                  />
+                )}
+                <button className={styles.play} onClick={audioSrc ? togglePlay : undefined} aria-label={playing ? 'Pauze' : 'Afspelen'}>
+                  {audioSrc ? (playing ? '⏸' : '▶') : '▶'}
+                </button>
                 <div className={styles.playerBody}>
-                  <div className={styles.scrub}>
-                    <div className={styles.scrubFill} style={{ width: `${Math.round(audio.progress * 100)}%` }} />
+                  <div className={styles.scrub} onClick={audioSrc ? seek : undefined} style={{ cursor: audioSrc ? 'pointer' : 'default' }}>
+                    <div className={styles.scrubFill} style={{ width: `${Math.round(progress * 100)}%` }} />
                   </div>
                   <div className={styles.scrubTimes}>
-                    <span>{audio.positionLabel}</span>
-                    <span>{audio.durationLabel}</span>
+                    <span>{audioSrc ? fmtTime(pos) : audio?.positionLabel}</span>
+                    <span>{audioSrc ? fmtTime(dur) : audio?.durationLabel}</span>
                   </div>
                 </div>
               </div>
