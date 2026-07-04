@@ -312,6 +312,7 @@ mod tests {
                     audio_start_time: Some(1.0),
                     audio_end_time: Some(3.0),
                     duration: Some(2.0),
+                    speaker: Some("mic".to_string()),
                 },
                 MeetingTranscript {
                     id: "t2".to_string(),
@@ -320,6 +321,7 @@ mod tests {
                     audio_start_time: Some(65.0),
                     audio_end_time: Some(68.0),
                     duration: Some(3.0),
+                    speaker: Some("system".to_string()),
                 },
             ],
         }

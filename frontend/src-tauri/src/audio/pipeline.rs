@@ -613,6 +613,7 @@ impl AudioCapture {
             timestamp,
             chunk_id,
             device_type: self.device_type.clone(),
+            speaker: None,
         };
 
         // NOTE: Raw audio is NOT sent to recording saver to prevent echo
@@ -831,6 +832,15 @@ impl AudioPipeline {
                             // Previous 2x gain was causing excessive limiting/distortion
                             let mixed_with_gain = mixed_clean;
 
+                            // OTTO (wie): dominant source for this window by per-channel
+                            // energy. "mic" = local speaker, "system" = remote/room.
+                            // System only wins when clearly louder than the mic.
+                            let otto_speaker = {
+                                let mic_e: f32 = mic_window.iter().map(|s| s * s).sum();
+                                let sys_e: f32 = sys_window.iter().map(|s| s * s).sum();
+                                if sys_e > mic_e * 1.3 { "system" } else { "mic" }
+                            };
+
                             // STEP 3: Send mixed audio for transcription (VAD + Whisper)
                             match self.vad_processor.process_audio(&mixed_with_gain) {
                                 Ok(speech_segments) => {
@@ -847,6 +857,7 @@ impl AudioPipeline {
                                                 timestamp: segment.start_timestamp_ms / 1000.0,
                                                 chunk_id: self.chunk_id_counter,
                                                 device_type: DeviceType::Microphone,  // Mixed audio
+                                                speaker: Some(otto_speaker.to_string()),
                                             };
 
                                             if let Err(e) = self.transcription_sender.send(transcription_chunk) {
@@ -873,6 +884,7 @@ impl AudioPipeline {
                                     timestamp: chunk.timestamp,
                                     chunk_id: self.chunk_id_counter,
                                     device_type: DeviceType::Microphone,  // Mixed audio
+                                    speaker: None,
                                 };
                                 let _ = sender.send(recording_chunk);
                             }
@@ -917,6 +929,7 @@ impl AudioPipeline {
                             timestamp: segment.start_timestamp_ms / 1000.0,
                             chunk_id: self.chunk_id_counter,
                             device_type: DeviceType::Microphone,
+                            speaker: None,
                         };
 
                         if let Err(e) = self.transcription_sender.send(transcription_chunk) {
@@ -1039,6 +1052,7 @@ impl AudioPipelineManager {
                 timestamp: 0.0,
                 chunk_id: u64::MAX, // Special ID to indicate flush
                 device_type: super::recording_state::DeviceType::Microphone,
+                speaker: None,
             };
 
             if let Err(e) = sender.send(flush_chunk) {
@@ -1059,6 +1073,7 @@ impl AudioPipelineManager {
                         timestamp: 0.0,
                         chunk_id: u64::MAX - (i as u64),
                         device_type: super::recording_state::DeviceType::Microphone,
+                        speaker: None,
                     };
                     let _ = sender.send(additional_flush);
                 }

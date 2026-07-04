@@ -120,9 +120,16 @@ export default function OttoVaultDetailConnected({
     }
   }, [meeting.id]);
 
+  const speakerLabel = (s?: string | null): string | undefined => {
+    if (!s) return undefined;
+    if (s === 'mic') return 'Jij';
+    if (s === 'system') return 'Anderen';
+    return s;
+  };
+
   const lines: OttoTranscriptLine[] = (transcripts || []).map((t) => ({
     ts: fmt(t.audio_start_time),
-    speaker: t.speaker || undefined,
+    speaker: speakerLabel(t.speaker),
     text: (t.text ?? t.transcript ?? '').trim(),
   })).filter((l) => l.text.length > 0);
 

@@ -22,6 +22,9 @@ pub struct AudioChunk {
     pub timestamp: f64,
     pub chunk_id: u64,
     pub device_type: DeviceType,
+    /// Otto: dominant source for this segment ("mic" | "system"), set by the
+    /// pipeline from per-channel energy. None for non-transcription chunks.
+    pub speaker: Option<String>,
 }
 
 /// Processed audio chunk (post-VAD) for recording

@@ -22,6 +22,9 @@ pub struct TranscriptSegment {
     pub display_time: String,   // Formatted time for display like "[02:15]"
     pub confidence: f32,
     pub sequence_id: u64,
+    // Otto (wie): dominant source for this segment ("mic" | "system").
+    #[serde(default)]
+    pub speaker: Option<String>,
 }
 
 /// Meeting metadata structure
@@ -128,6 +131,7 @@ impl RecordingSaver {
             duration: 0.0,
             display_time: "[00:00]".to_string(),
             confidence: 1.0,
+            speaker: None,
             sequence_id: 0,
         };
         self.add_transcript_segment(segment);
