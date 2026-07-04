@@ -136,3 +136,46 @@ no-summary placeholder (`cargo test -p meetily otto::`).
 3. **Participants/speaker**: acceptable that Phase 1 notes have empty
    participants until diarization exists?
 4. **auto_save**: should Otto force `auto_save = true` so P2 can't be disabled?
+
+---
+
+## Overnight session — full Otto reskin + wie/wat
+
+Branch: merged to `main`. App rebuilt + installed to `/Applications/Otto Scribe.app`.
+
+### Done & working
+- **App renamed to Otto Scribe** (productName + window title; bundle id kept
+  `com.meetily.ai` so existing meetings/participants/models carry over).
+- **Whole app reskinned dark + lavender** — retinted the shadcn `:root` tokens and
+  a global utility remap (Meetily's `bg-white`/`bg-gray-*`/`text-gray-*`/blue →
+  Otto palette) in `globals.css`. Native window theme = Dark. Confirmed present in
+  the production CSS. The design2 meeting view uses its own scoped CSS (untouched).
+- **Rebrand**: Logo → "Otto AI / Second Brain" lavender mark; onboarding
+  "Welcome to Otto Scribe"; About + page/window title.
+- **Meeting-detail = stich-design2 dashboard** (Executive Summary + Action Items +
+  transcript + audio player + topic/participant pills), wired to real data:
+  transcript, participants (otto_* commands), summary (mapped from Meetily
+  sections), and **Sync to Vault**.
+- **Wat (topics)**: topic pills derived from the summary sections; `otto_topics`
+  datamodel table added.
+- **Audio player (P2)**: functional — loads the meeting's `audio.mp4` via
+  `read_audio_file` → blob URL, real play/pause/seek. CSP gained `media-src blob:`.
+- Real fonts: GeistSans / Inter / JetBrains Mono via `geist` + `next/font`.
+
+### Deferred (with reason)
+- **Wie (automatic diarisation)**: intentionally NOT wired into the live audio
+  pipeline overnight. The mic/system streams are mixed *before* VAD
+  (`audio/pipeline.rs:~826`), so per-speaker labels need a per-channel VAD split
+  and threading `speaker` through worker → event → DB insert. That is
+  recording-hot-path surgery (P1: recording must never break) and can't be
+  verified without a live multi-speaker recording. Meeting-level "who" works
+  (participant selection). Named multi-speaker diarisation needs a speaker-
+  embedding model + clustering — a tested follow-up, hook point documented above.
+- **Pixel-perfect per-screen match** to design2 for onboarding/home/settings: the
+  global skin makes them coherent dark Otto, but they aren't hand-rebuilt to the
+  mockups. The dev-server browser can't be screenshotted reliably (polling
+  providers never idle without Tauri), so further pixel work needs the real app.
+
+### Verification done
+- Rust + frontend production builds pass. Vault export verified end-to-end
+  earlier. App installed and launches. Skin confirmed in built CSS.
