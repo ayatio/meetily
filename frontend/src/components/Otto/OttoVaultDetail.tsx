@@ -13,7 +13,12 @@
  */
 
 import { useState } from 'react';
+import { GeistSans } from 'geist/font/sans';
+import { Inter, JetBrains_Mono } from 'next/font/google';
 import styles from './OttoVaultDetail.module.css';
+
+const inter = Inter({ subsets: ['latin'], variable: '--otto-inter', display: 'swap' });
+const jetbrains = JetBrains_Mono({ subsets: ['latin'], variable: '--otto-mono', display: 'swap' });
 
 export interface OttoTranscriptLine {
   ts: string;
@@ -80,7 +85,7 @@ export default function OttoVaultDetail({
   };
 
   return (
-    <div className={styles.scope}>
+    <div className={`${styles.scope} ${GeistSans.variable} ${inter.variable} ${jetbrains.variable}`}>
       <aside className={styles.sidebar}>
         <div className={styles.brand}>
           <span className={styles.brandName}>Otto AI</span>

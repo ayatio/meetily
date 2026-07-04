@@ -171,7 +171,7 @@ export default function PageContent({
       transition={{ duration: 0.3, ease: 'easeOut' }}
       className="flex flex-col h-screen"
     >
-      <OttoVaultDetailConnected meeting={meeting} transcripts={meetingData.transcripts} />
+      <OttoVaultDetailConnected meeting={meeting} transcripts={meetingData.transcripts} summary={meetingData.aiSummary} />
     </motion.div>
   );
 }

@@ -22,9 +22,9 @@
   --error: #ffb4ab;
   --mint: #7fdcb0;
 
-  --font-display: "Geist", system-ui, -apple-system, "Segoe UI", sans-serif;
-  --font-body: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
-  --font-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  --font-display: var(--font-geist-sans), system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-body: var(--otto-inter), system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: var(--otto-mono), ui-monospace, "SF Mono", Menlo, Consolas, monospace;
 
   display: flex;
   height: 100vh;

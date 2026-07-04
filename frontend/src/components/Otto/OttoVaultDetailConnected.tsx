@@ -9,7 +9,22 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { invoke } from '@tauri-apps/api/core';
-import OttoVaultDetail, { OttoTranscriptLine } from './OttoVaultDetail';
+import OttoVaultDetail, { OttoTranscriptLine, OttoSummarySection } from './OttoVaultDetail';
+
+interface SummarySectionLike { title?: string; blocks?: { content?: string }[] }
+type SummaryLike = Record<string, SummarySectionLike> | null | undefined;
+
+function mapSummary(summary: SummaryLike): OttoSummarySection[] {
+  if (!summary) return [];
+  return Object.entries(summary)
+    .filter(([, v]) => v && typeof v === 'object' && Array.isArray((v as SummarySectionLike).blocks))
+    .map(([key, v]) => {
+      const s = v as SummarySectionLike;
+      const texts = (s.blocks || []).map((b) => (b?.content ?? '').trim()).filter(Boolean);
+      return { category: (s.title || key).toUpperCase(), text: texts.join('  •  ') };
+    })
+    .filter((s) => s.text.length > 0);
+}
 
 interface TranscriptItem {
   id?: string;
@@ -33,9 +48,11 @@ function fmt(seconds?: number | null): string {
 export default function OttoVaultDetailConnected({
   meeting,
   transcripts,
+  summary,
 }: {
   meeting: MeetingLike;
   transcripts: TranscriptItem[];
+  summary?: SummaryLike;
 }) {
   const [participants, setParticipants] = useState<string[]>([]);
   const [exporting, setExporting] = useState(false);
@@ -84,6 +101,7 @@ export default function OttoVaultDetailConnected({
       title={meeting.title || 'Meeting'}
       dateLabel={dateLabel}
       participants={participants}
+      summary={mapSummary(summary)}
       transcript={lines}
       exporting={exporting}
       status={status}
