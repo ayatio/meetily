@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { RecordingControls } from '@/components/RecordingControls';
+import OttoLiveCoach from '@/components/Otto/OttoLiveCoach';
 import { useSidebar } from '@/components/Sidebar/SidebarProvider';
 import { usePermissionCheck } from '@/hooks/usePermissionCheck';
 import { useRecordingState, RecordingStatus } from '@/contexts/RecordingStateContext';
@@ -196,6 +197,8 @@ export default function Home() {
       transition={{ duration: 0.3, ease: 'easeOut' }}
       className="flex flex-col h-screen bg-gray-50"
     >
+      {/* Otto live coach — appears during recording */}
+      <OttoLiveCoach />
       {/* All Modals supported*/}
       <SettingsModals
         modals={modals}

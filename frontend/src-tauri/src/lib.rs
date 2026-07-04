@@ -538,6 +538,7 @@ pub fn run() {
             otto::projects::otto_list_projects,
             otto::projects::otto_set_meeting_project,
             otto::projects::otto_get_meeting_project,
+            otto::coach::otto_coach_pass,
             analytics::commands::init_analytics,
             analytics::commands::disable_analytics,
             analytics::commands::track_event,

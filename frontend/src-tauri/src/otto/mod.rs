@@ -7,6 +7,7 @@
 //! meeting (raw transcript + summary) as a single Markdown note into the
 //! Obsidian vault `Inbox/` folder (principle P7).
 
+pub mod coach;
 pub mod participants;
 pub mod projects;
 pub mod vault_writer;

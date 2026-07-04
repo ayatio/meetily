@@ -451,17 +451,34 @@ mod tests {
                 .and_then(|r| serde_json::from_str::<Value>(&r).ok());
 
             let participants = super::super::participants::load_participants(&pool, &id).await;
+            let project = super::super::projects::load_meeting_project(&pool, &id)
+                .await
+                .unwrap_or_default();
+            let exported_at = chrono::Utc::now().to_rfc3339();
             let md = build_note_markdown(
                 &meeting,
                 summary.as_ref(),
                 &participants,
-                "",
-                "2026-07-04T00:00:00+00:00",
+                &project,
+                &exported_at,
             );
 
-            let dir = std::env::temp_dir().join("otto-real-smoke");
-            let _ = std::fs::remove_dir_all(&dir);
-            let path = write_unique(&dir, &slugify(&meeting.title), &md).unwrap();
+            // OTTO_EXPORT_REAL=1 writes to the real vault (Projects/<project>/Meetings
+            // or Inbox/), exactly like the app command; otherwise a temp dir.
+            let dir = if std::env::var("OTTO_EXPORT_REAL").is_ok() {
+                if project.trim().is_empty() {
+                    vault_inbox_dir().unwrap()
+                } else {
+                    super::super::projects::vault_projects_dir().unwrap().join(&project).join("Meetings")
+                }
+            } else {
+                let d = std::env::temp_dir().join("otto-real-smoke");
+                let _ = std::fs::remove_dir_all(&d);
+                d
+            };
+            let date = meeting.created_at.split('T').next().unwrap_or("undated");
+            let base = format!("{}-{}", date, slugify(&meeting.title));
+            let path = write_unique(&dir, &base, &md).unwrap();
             let written = std::fs::read_to_string(&path).unwrap();
 
             assert!(written.starts_with("---\n"));
