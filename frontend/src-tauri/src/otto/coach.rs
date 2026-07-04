@@ -56,10 +56,11 @@ Geef UITSLUITEND geldige JSON terug, exact dit formaat en niets anders:
 
 Regels:
 - summary: 1-3 punten. BRONPLICHT: elke "cite" is een [mm:ss] die letterlijk in het transcript staat. Geen bron = laat het punt weg.
-- anticipate: 0-2 inzichten. Alleen als je iets zinnigs hebt (een risico dat dreigt, een beslissing die onbesproken blijft). Verzin niks.
-- clarifications: 0-3 concrete vragen, tussen aanhalingstekens, gericht (bv. "Marcus, is de Acme-deal definitief weg?").
+- anticipate: geef 1-2 inzichten zodra er inhoud is — een risico dat dreigt, een beslissing die onbesproken blijft, of een eerdere afspraak om aan te herinneren. Verzin geen feiten, maar wees proactief.
+- clarifications: geef ZO GAUW ER inhoud is minstens 1 concrete vraag (max 3), tussen aanhalingstekens, gericht (bv. "Bedoel je dat X ook voor Y geldt?"). Alleen bij een echt lege/betekenisloze transcript geef je een lege lijst.
+- Vul ALLE velden in (topic, summary, anticipate, clarifications). Laat anticipate/clarifications niet leeg als er iets te vragen valt.
 - Nederlands, tenzij het gesprek duidelijk anderstalig is.
-- Geen tekst buiten de JSON."#;
+- Geef ALLEEN de JSON, compact, en zorg dat de JSON compleet en gesloten is."#;
 
 fn extract_json(raw: &str) -> Option<String> {
     let start = raw.find('{')?;
@@ -152,8 +153,8 @@ pub async fn otto_coach_pass<R: Runtime>(
         &recent,
         setting.ollama_endpoint.as_deref(),
         None,
-        Some(600),
-        Some(0.3),
+        Some(1100),
+        Some(0.4),
         None,
         app_data_dir.as_ref(),
         None,
