@@ -168,6 +168,7 @@ fn render_transcript(transcripts: &[MeetingTranscript]) -> String {
 pub fn build_note_markdown(
     meeting: &MeetingDetails,
     summary: Option<&Value>,
+    participants: &[String],
     exported_at: &str,
 ) -> String {
     let date = meeting.created_at.split('T').next().unwrap_or(&meeting.created_at);
@@ -177,6 +178,7 @@ pub fn build_note_markdown(
         None => "_Nog geen samenvatting beschikbaar._".to_string(),
     };
     let transcript_md = render_transcript(&meeting.transcripts);
+    let participants_yaml = render_participants_yaml(participants);
 
     // YAML frontmatter. Title is quoted to survive colons/special chars.
     let safe_title = meeting.title.replace('"', "'");
@@ -187,7 +189,7 @@ date: {date}\n\
 source: otto-scribe\n\
 type: meeting-transcript\n\
 meeting_id: {id}\n\
-participants: []\n\
+participants: {participants}\n\
 tags: [otto-scribe, meeting, inbox]\n\
 exported: {exported}\n\
 ---\n\
@@ -204,10 +206,24 @@ exported: {exported}\n\
         title = safe_title,
         date = date,
         id = meeting.id,
+        participants = participants_yaml,
         exported = exported_at,
         summary = summary_md,
         transcript = transcript_md,
     )
+}
+
+/// Render participant names as a YAML flow sequence, e.g. `["Ayat", "Caroline"]`.
+/// Empty list renders as `[]`.
+fn render_participants_yaml(participants: &[String]) -> String {
+    if participants.is_empty() {
+        return "[]".to_string();
+    }
+    let items: Vec<String> = participants
+        .iter()
+        .map(|p| format!("\"{}\"", p.replace('"', "'")))
+        .collect();
+    format!("[{}]", items.join(", "))
 }
 
 /// Write `content` to `Inbox/<filename>`, never overwriting an existing note
@@ -262,8 +278,10 @@ pub async fn otto_export_meeting_to_vault(
         }
     };
 
+    let participants = super::participants::load_participants(pool, &meeting_id).await;
+
     let exported_at = chrono::Utc::now().to_rfc3339();
-    let content = build_note_markdown(&meeting, summary_value.as_ref(), &exported_at);
+    let content = build_note_markdown(&meeting, summary_value.as_ref(), &participants, &exported_at);
 
     let date = meeting.created_at.split('T').next().unwrap_or("undated");
     let base_name = format!("{}-{}", date, slugify(&meeting.title));
@@ -320,12 +338,18 @@ mod tests {
             "overview": "Korte sync over de roadmap.",
             "action_items": ["Ayat stuurt de planning", "Team reviewt Brainiac"]
         });
-        let md = build_note_markdown(&m, Some(&summary), "2026-07-04T10:05:00+00:00");
+        let md = build_note_markdown(
+            &m,
+            Some(&summary),
+            &["Ayat".to_string(), "Caroline".to_string()],
+            "2026-07-04T10:05:00+00:00",
+        );
 
         assert!(md.starts_with("---\n"));
         assert!(md.contains("title: \"Team Standup: Q3\""));
         assert!(md.contains("date: 2026-07-04"));
         assert!(md.contains("meeting_id: abc123"));
+        assert!(md.contains("participants: [\"Ayat\", \"Caroline\"]"));
         assert!(md.contains("## Samenvatting"));
         assert!(md.contains("Korte sync over de roadmap."));
         assert!(md.contains("- Ayat stuurt de planning"));
@@ -337,8 +361,9 @@ mod tests {
     #[test]
     fn note_without_summary_has_placeholder() {
         let m = sample_meeting();
-        let md = build_note_markdown(&m, None, "2026-07-04T10:05:00+00:00");
+        let md = build_note_markdown(&m, None, &[], "2026-07-04T10:05:00+00:00");
         assert!(md.contains("_Nog geen samenvatting beschikbaar._"));
+        assert!(md.contains("participants: []"));
     }
 
     #[test]
@@ -395,7 +420,13 @@ mod tests {
                 .and_then(|p| p.result)
                 .and_then(|r| serde_json::from_str::<Value>(&r).ok());
 
-            let md = build_note_markdown(&meeting, summary.as_ref(), "2026-07-04T00:00:00+00:00");
+            let participants = super::super::participants::load_participants(&pool, &id).await;
+            let md = build_note_markdown(
+                &meeting,
+                summary.as_ref(),
+                &participants,
+                "2026-07-04T00:00:00+00:00",
+            );
 
             let dir = std::env::temp_dir().join("otto-real-smoke");
             let _ = std::fs::remove_dir_all(&dir);
